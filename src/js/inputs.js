@@ -60,8 +60,7 @@ function tryFloorKick(grid, piece) {
   return true;
 }
 
-const debug = document.querySelector('#debug');
-const DAS = 200; // Piece autoshift delay
+const DAS = 250; // Piece autoshift delay
 
 const hardDrop = new Event('harddrop');
 const softDrop = new Event('softdrop');
@@ -154,9 +153,8 @@ export default function handleKeys(grid, piece, frameLapse) {
       }
 
       grid.add(piece.blocks);
-    }
 
+    }
     keyState[rotateRight].time += frameLapse;
   }
-  debug.innerHTML = JSON.stringify(keyState);
 }

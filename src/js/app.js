@@ -1,60 +1,27 @@
 import Grid from './Grid';
-import Tetromino from './Tetromino';
-import { J, L, T, O, I, S, Z } from './shapes';
+import { getNextPieces } from './randomTetromino';
 import handleKeys from './inputs';
-
 import Vector from './Vector';
+import { drawGameGrid, drawQueue } from './render';
 
+import {
+  GRID_WIDTH,
+  GRID_HEIGHT,
+  FPS
+} from './constants';
 
-const width = 10;
-const height = 22;
+import '../styles/index.css';
 
-// Rendering
-const canvas = document.querySelector('canvas');
+const queue = getNextPieces(3);
 
-canvas.width = width * 30;
-canvas.height = height * 30;
+const gameGrid = new Grid(GRID_WIDTH, GRID_HEIGHT);
 
-const blockStyles = {
-  T: 'purple',
-  O: 'yellow',
-  I: 'cyan',
-  J: 'blue',
-  L: 'orange',
-  S: 'green',
-  Z: 'red'
-};
-
-const blockSize = canvas.width / width;
-const ctx = canvas.getContext('2d');
-
-function drawGrid(blocks) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  blocks.map(block => {
-    const { x, y } = block.location;
-
-    ctx.fillStyle = blockStyles[block.label]
-    ctx.fillRect(
-      x * blockSize,
-      y * blockSize,
-      blockSize,
-      blockSize
-    );
-  });
-}
-
-
-// Game Logic
-const grid = new Grid(width, height);
-const shapes = [J, L, T, O, I, S, Z]; 
-
-let piece = new Tetromino(3, 0, shapes[Math.floor(Math.random() * shapes.length)]);
+let piece;
 let gameOver = false;
 let level = 1;
 let defaultLockDelay = 500;
 let lockDelay = defaultLockDelay;
 
-const FPS = 60;
 let fallSpeed = getFallSpeed(); // Frames between a piece's descent
 let lastFrame;
 let frameLapse; // Should this be scoped only in loop()? Input handling uses it
@@ -65,24 +32,24 @@ function getFallSpeed() {
 }
 
 function clearLines() {
-  const blocks = grid.blocks;
+  const blocks = gameGrid.blocks;
 
   let rowsCleared = 0;
 
-  for (let y = height - 1; y >= 0; y--) {
+  for (let y = GRID_HEIGHT - 1; y >= 0; y--) {
     const row = blocks.filter(block => block.location.y === y);
 
     if (rowsCleared) {
-      grid.remove(row);
+      gameGrid.remove(row);
       for (let block of row) {
         block.location = block.location.add(new Vector(0, rowsCleared));
       }
 
-      grid.add(row);
+      gameGrid.add(row);
     }
     
     if (row.length > 9) {
-      grid.remove(row);
+      gameGrid.remove(row);
       rowsCleared++;
     }
   }
@@ -91,31 +58,24 @@ function clearLines() {
 function pieceIsLanded() {
   let landed = false; 
 
-  grid.remove(piece.blocks);
+  gameGrid.remove(piece.blocks);
   piece.move(0, 1);
-  if (grid.willCollide(piece.blocks)) {
+  if (gameGrid.willCollide(piece.blocks)) {
     landed = true;
   }
   
   piece.move(0, -1);
-  grid.add(piece.blocks);
+  gameGrid.add(piece.blocks);
   return landed;
 }
 
-window.addEventListener('softdrop', () => {
-  fallSpeed = 1;
-});
-
-window.addEventListener('endsoftdrop', () => {
-  fallSpeed = getFallSpeed();
-});
-
-window.addEventListener('harddrop', () => {
-  lockDelay = 0;
-});
+function nextPiece() {
+  piece = queue.shift();
+  queue.push(...getNextPieces(1));
+}
 
 function loop() {
-  window.requestAnimationFrame(() => loop());
+  window.requestAnimationFrame(loop);
   
   const frameInterval = 1000 / FPS;
   const now = Date.now();
@@ -131,11 +91,11 @@ function loop() {
   if (pieceIsLanded()) {
     if (lockDelay < 1) {
       clearLines();
+      nextPiece();
       lockDelay = defaultLockDelay;
-      piece = new Tetromino(3, 0, shapes[Math.floor(Math.random() * shapes.length)]);
-      gameOver = grid.willCollide(piece.blocks);
+      gameOver = gameGrid.willCollide(piece.blocks);
       framesSinceFall = 0;
-      grid.add(piece.blocks);
+      gameGrid.add(piece.blocks);
       return;
     } else {
       lockDelay -= frameInterval;
@@ -144,18 +104,32 @@ function loop() {
     if (framesSinceFall >= fallSpeed) {
       framesSinceFall = -1;
   
-      grid.remove(piece.blocks);
+      gameGrid.remove(piece.blocks);
       piece.move(0, 1);
 
-      grid.add(piece.blocks);
+      gameGrid.add(piece.blocks);
     }
   }
 
-  handleKeys(grid, piece, frameLapse);
+  handleKeys(gameGrid, piece, frameLapse);
 
-  drawGrid(grid.blocks);
+  drawGameGrid(gameGrid.blocks);
+  drawQueue();
 
   framesSinceFall++;
 }
 
+window.addEventListener('softdrop', () => {
+  fallSpeed = 1;
+});
+
+window.addEventListener('endsoftdrop', () => {
+  fallSpeed = getFallSpeed();
+});
+
+window.addEventListener('harddrop', () => {
+  lockDelay = 0;
+});
+
+nextPiece();
 loop();
