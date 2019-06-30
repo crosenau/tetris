@@ -9,8 +9,10 @@ const canvas = document.querySelector('#grid');
 
 // Calculate max possible dimensions for grid to fit into container
 const parent = canvas.parentElement;
+
 const pWidth = Number(getComputedStyle(parent).width.replace('px', ''));
 const pHeight = Number(getComputedStyle(parent).height.replace('px', ''))
+
 const gridWidth = 1;
 const gridHeight = 2;
 const scale = Math.min(pWidth / gridWidth, pHeight / gridHeight);
@@ -27,8 +29,8 @@ export default function drawGrid(blocks) {
 
   ctx.clearRect(0, 0, width, height);
   
-  const blockWidth = Math.ceil(width / GRID_COLUMNS);
-  const blockHeight = Math.ceil(height / (GRID_ROWS - HIDDEN_ROWS));
+  const blockWidth = Math.floor(width / GRID_COLUMNS);
+  const blockHeight = Math.floor(height / (GRID_ROWS - HIDDEN_ROWS));
 
   for (let block of blocks) {
     drawBlock(block, blockWidth, blockHeight, ctx);

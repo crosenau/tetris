@@ -6,18 +6,20 @@ body {
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  display: flex;
+  grid-template-columns: repeat(12, 1fr);
+
 }
 
-#left {
-  width: 33%;
+#hold-container {
+  background-color: #444;
+  grid-area: 1 / 4 / 1 / 5
 }
 
-#center {
-  background-color: grey;
-  width: 33%;
-  height: 100%;
+#grid-container {
+  background-color: #222;
+  grid-area: 1 / 5 / 1 / 9;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -29,8 +31,9 @@ body {
   background-color: black;
 }
 
-#right {
-  width: 33%;
+#next-container {
+  background-color: #444;
+  grid-area: 1 / 9 / 1 / 10;
 }
 
 #debug {
