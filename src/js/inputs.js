@@ -60,7 +60,7 @@ function tryFloorKick(grid, piece) {
   return true;
 }
 
-const DAS = 250; // Piece autoshift delay
+const DAS = 300; // Piece autoshift delay
 
 const hardDrop = new Event('harddrop');
 const softDrop = new Event('softdrop');

@@ -2,11 +2,12 @@ import Grid from './Grid';
 import { getNextPieces } from './randomTetromino';
 import handleKeys from './inputs';
 import Vector from './Vector';
-import { drawGameGrid, drawQueue } from './render';
+import drawGrid from './render/drawGrid';
 
 import {
-  GRID_WIDTH,
-  GRID_HEIGHT,
+  GRID_COLUMNS,
+  GRID_ROWS,
+  HIDDEN_ROWS,
   FPS
 } from './constants';
 
@@ -14,7 +15,7 @@ import '../styles/index.css';
 
 const queue = getNextPieces(3);
 
-const gameGrid = new Grid(GRID_WIDTH, GRID_HEIGHT);
+const grid = new Grid(GRID_COLUMNS, GRID_ROWS);
 
 let piece;
 let gameOver = false;
@@ -32,24 +33,24 @@ function getFallSpeed() {
 }
 
 function clearLines() {
-  const blocks = gameGrid.blocks;
+  const blocks = grid.blocks;
 
   let rowsCleared = 0;
 
-  for (let y = GRID_HEIGHT - 1; y >= 0; y--) {
+  for (let y = GRID_ROWS - 1; y >= 0; y--) {
     const row = blocks.filter(block => block.location.y === y);
 
     if (rowsCleared) {
-      gameGrid.remove(row);
+      grid.remove(row);
       for (let block of row) {
         block.location = block.location.add(new Vector(0, rowsCleared));
       }
 
-      gameGrid.add(row);
+      grid.add(row);
     }
     
     if (row.length > 9) {
-      gameGrid.remove(row);
+      grid.remove(row);
       rowsCleared++;
     }
   }
@@ -58,14 +59,14 @@ function clearLines() {
 function pieceIsLanded() {
   let landed = false; 
 
-  gameGrid.remove(piece.blocks);
+  grid.remove(piece.blocks);
   piece.move(0, 1);
-  if (gameGrid.willCollide(piece.blocks)) {
+  if (grid.willCollide(piece.blocks)) {
     landed = true;
   }
   
   piece.move(0, -1);
-  gameGrid.add(piece.blocks);
+  grid.add(piece.blocks);
   return landed;
 }
 
@@ -93,9 +94,9 @@ function loop() {
       clearLines();
       nextPiece();
       lockDelay = defaultLockDelay;
-      gameOver = gameGrid.willCollide(piece.blocks);
+      gameOver = grid.willCollide(piece.blocks);
       framesSinceFall = 0;
-      gameGrid.add(piece.blocks);
+      grid.add(piece.blocks);
       return;
     } else {
       lockDelay -= frameInterval;
@@ -104,17 +105,23 @@ function loop() {
     if (framesSinceFall >= fallSpeed) {
       framesSinceFall = -1;
   
-      gameGrid.remove(piece.blocks);
+      grid.remove(piece.blocks);
       piece.move(0, 1);
 
-      gameGrid.add(piece.blocks);
+      grid.add(piece.blocks);
     }
   }
 
-  handleKeys(gameGrid, piece, frameLapse);
+  handleKeys(grid, piece, frameLapse);
 
-  drawGameGrid(gameGrid.blocks);
-  drawQueue();
+  drawGrid(grid.blocks
+    .map(block => {
+      block.location.y -= HIDDEN_ROWS;
+      return block;
+    })
+    .filter(block => block.location.y > -1)
+  );
+  //drawQueue();
 
   framesSinceFall++;
 }
@@ -132,4 +139,5 @@ window.addEventListener('harddrop', () => {
 });
 
 nextPiece();
+
 loop();

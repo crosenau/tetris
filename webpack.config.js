@@ -1,12 +1,24 @@
 const path = require('path');
-const HtmlWebPackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const config = {
-  entry: './src/js/app.js',
+  mode: 'development',
+  entry: path.join(__dirname, 'src/js/app.js'),
   output: {
     path: path.join(__dirname, 'dist'),
-    filename: 'index_bundle.js'
+    filename: 'bundle.js'
   },
+  devServer: {
+    publicPath: '/dist',
+    port: 3000,
+    //disableHostCheck: true
+  },
+  plugins: [
+    new MiniCssExtractPlugin({
+      filename: 'bundle.css',
+      chunkFilename: '01.css'
+    }),
+  ],
   module: {
     rules: [
       {
@@ -20,17 +32,20 @@ const config = {
         test: /\.css$/,
         exclude: /node_modules/,
         use: [
-          { loader: 'style-loader' },
+          //{ loader: 'style-loader' },
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {
+              publicPath: (resourcePath, context) => {
+                return path.relative(path.dirname(resourcePath), context) + '/';
+              }
+            }
+          },
           { loader: 'css-loader' }
         ]
       }
     ]
   },
-  plugins: [
-    new HtmlWebPackPlugin({
-      template: './src/index.html'
-    })
-  ]
 };
 
 module.exports = config;
