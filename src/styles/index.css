@@ -5,21 +5,26 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
+#game {
+  height: 100%;
+  display: grid;
+  grid-template-rows: repeat(12, 1fr);
+  grid-template-columns: repeat(12, 1fr);
 }
 
 #hold-container {
   background-color: #444;
-  grid-area: 1 / 4 / 1 / 5
+  grid-area: 2 / 4 / 3 / 5;
 }
 
-#grid-container {
-  background-color: #222;
-  grid-area: 1 / 5 / 1 / 9;
-  min-width: 0;
-  min-height: 0;
+#field-container {
+  background-color: #444;
+  grid-area: 2 / 5 / 12 / 9;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -27,13 +32,18 @@ body {
 
 }
 
-#grid {
+#field {
   background-color: black;
 }
 
 #next-container {
   background-color: #444;
-  grid-area: 1 / 9 / 1 / 10;
+  grid-area: 2 / 9 / 5 / 10;
+  padding: 1rem 1rem 0 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 #debug {

@@ -1,36 +1,13 @@
 import drawBlock from './drawBlock';
-import {
-  GRID_COLUMNS,
-  GRID_ROWS,
-  HIDDEN_ROWS
-} from '../constants';
 
-const canvas = document.querySelector('#grid');
-
-// Calculate max possible dimensions for grid to fit into container
-const parent = canvas.parentElement;
-
-const pWidth = Number(getComputedStyle(parent).width.replace('px', ''));
-const pHeight = Number(getComputedStyle(parent).height.replace('px', ''))
-
-const gridWidth = 1;
-const gridHeight = 2;
-const scale = Math.min(pWidth / gridWidth, pHeight / gridHeight);
-
-canvas.width = gridWidth * scale;
-canvas.height = gridHeight * scale;
-canvas.style.width=`${gridWidth * scale}px`;
-canvas.style.height=`${gridHeight * scale}px`;
-
-const ctx = canvas.getContext('2d');
-
-export default function drawGrid(blocks) {
+export default function drawGrid(blocks, rows, columns, canvas) {
   const { width, height } = canvas;
+  const ctx = canvas.getContext('2d');
 
   ctx.clearRect(0, 0, width, height);
   
-  const blockWidth = Math.floor(width / GRID_COLUMNS);
-  const blockHeight = Math.floor(height / (GRID_ROWS - HIDDEN_ROWS));
+  const blockWidth = Math.floor(width / columns);
+  const blockHeight = Math.floor(height / rows);
 
   for (let block of blocks) {
     drawBlock(block, blockWidth, blockHeight, ctx);

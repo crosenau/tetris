@@ -29,6 +29,10 @@ export default class Tetromino {
   move(x, y) {
     this.topLeft = this.topLeft.add(new Vector(x, y));
   }
+  
+  moveTo(x, y) {
+    this.topLeft = new Vector(x, y);
+  }
 
   land() {
     this.landed = true;

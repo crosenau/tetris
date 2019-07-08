@@ -2,20 +2,25 @@ import Grid from './Grid';
 import { getNextPieces } from './randomTetromino';
 import handleKeys from './inputs';
 import Vector from './Vector';
-import drawGrid from './render/drawGrid';
+import { drawField, drawNextPreview } from './render/render';
 
 import {
-  GRID_COLUMNS,
-  GRID_ROWS,
+  FIELD_COLUMNS,
+  FIELD_ROWS,
   HIDDEN_ROWS,
+  NEXT_COLUMNS,
+  NEXT_ROWS,
   FPS
 } from './constants';
 
 import '../styles/index.css';
 
-const queue = getNextPieces(3);
+const debug = document.querySelector('#debug');
 
-const grid = new Grid(GRID_COLUMNS, GRID_ROWS);
+const field = new Grid(FIELD_COLUMNS, FIELD_ROWS);
+const nextPreview = new Grid(NEXT_COLUMNS, NEXT_ROWS);
+
+const nextPieces = getNextPieces(3);
 
 let piece;
 let gameOver = false;
@@ -33,46 +38,54 @@ function getFallSpeed() {
 }
 
 function clearLines() {
-  const blocks = grid.blocks;
+  const blocks = field.blocks;
 
   let rowsCleared = 0;
 
-  for (let y = GRID_ROWS - 1; y >= 0; y--) {
+  for (let y = FIELD_ROWS - 1; y >= 0; y--) {
     const row = blocks.filter(block => block.location.y === y);
 
     if (rowsCleared) {
-      grid.remove(row);
+      field.remove(row);
       for (let block of row) {
         block.location = block.location.add(new Vector(0, rowsCleared));
       }
 
-      grid.add(row);
+      field.add(row);
     }
     
     if (row.length > 9) {
-      grid.remove(row);
+      field.remove(row);
       rowsCleared++;
     }
   }
 }
 
 function pieceIsLanded() {
-  let landed = false; 
-
-  grid.remove(piece.blocks);
+  field.remove(piece.blocks);
   piece.move(0, 1);
-  if (grid.willCollide(piece.blocks)) {
-    landed = true;
-  }
+  
+  let landed = field.willCollide(piece.blocks);
   
   piece.move(0, -1);
-  grid.add(piece.blocks);
+  field.add(piece.blocks);
   return landed;
 }
 
 function nextPiece() {
-  piece = queue.shift();
-  queue.push(...getNextPieces(1));
+  piece = nextPieces.shift();
+  piece.moveTo(3, 2);
+  nextPieces.push(...getNextPieces(1));
+  nextPreview.clearCells();
+  
+  for (let i = 0; i < nextPieces.length; i++) {
+    nextPieces[i].moveTo(0, i * 3);
+    nextPreview.add(nextPieces[i].blocks);
+    
+    //alert(JSON.stringify(nextPreview.blocks));
+  }
+  
+  drawNextPreview(nextPreview.blocks);
 }
 
 function loop() {
@@ -94,9 +107,9 @@ function loop() {
       clearLines();
       nextPiece();
       lockDelay = defaultLockDelay;
-      gameOver = grid.willCollide(piece.blocks);
+      gameOver = field.willCollide(piece.blocks);
       framesSinceFall = 0;
-      grid.add(piece.blocks);
+      field.add(piece.blocks);
       return;
     } else {
       lockDelay -= frameInterval;
@@ -105,23 +118,22 @@ function loop() {
     if (framesSinceFall >= fallSpeed) {
       framesSinceFall = -1;
   
-      grid.remove(piece.blocks);
+      field.remove(piece.blocks);
       piece.move(0, 1);
 
-      grid.add(piece.blocks);
+      field.add(piece.blocks);
     }
   }
 
-  handleKeys(grid, piece, frameLapse);
+  handleKeys(field, piece, frameLapse);
 
-  drawGrid(grid.blocks
+  drawField(field.blocks
     .map(block => {
       block.location.y -= HIDDEN_ROWS;
       return block;
     })
     .filter(block => block.location.y > -1)
   );
-  //drawQueue();
 
   framesSinceFall++;
 }

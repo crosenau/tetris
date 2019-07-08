@@ -8,11 +8,16 @@
   <title>Tetris</title>
 </head>
 <body>
-  <div id="hold-container"></div>
-  <div id="grid-container">
-    <canvas id="grid"></canvas>
+  <div id='game'>
+    <div id="hold-container"></div>
+    <div id="field-container">
+      <canvas id="field"></canvas>
+    </div>
+    <div id="next-container">
+      <canvas id="next"></canvas>
+    </div>
   </div>
-  <div id="next-container"></div>
+
   <div id="debug"></div>
 
   <script src="/dist/bundle.js"></script>
