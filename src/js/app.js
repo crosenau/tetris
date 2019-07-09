@@ -1,8 +1,9 @@
 import Grid from './Grid';
+import Tetromino from './Tetromino';
 import { getNextPieces } from './randomTetromino';
 import handleKeys from './inputs';
 import Vector from './Vector';
-import { drawField, drawNextPreview } from './render/render';
+import { drawField, drawNextPreview, drawHoldView } from './render/render';
 
 import {
   FIELD_COLUMNS,
@@ -10,6 +11,8 @@ import {
   HIDDEN_ROWS,
   NEXT_COLUMNS,
   NEXT_ROWS,
+  HOLD_COLUMNS,
+  HOLD_ROWS,
   FPS
 } from './constants';
 
@@ -19,10 +22,14 @@ const debug = document.querySelector('#debug');
 
 const field = new Grid(FIELD_COLUMNS, FIELD_ROWS);
 const nextPreview = new Grid(NEXT_COLUMNS, NEXT_ROWS);
+const holdView = new Grid(HOLD_COLUMNS, HOLD_ROWS);
 
 const nextPieces = getNextPieces(3);
 
 let piece;
+let ghostPiece;
+let heldPiece;
+let holdUsed = false;
 let gameOver = false;
 let level = 1;
 let defaultLockDelay = 500;
@@ -79,13 +86,54 @@ function nextPiece() {
   nextPreview.clearCells();
   
   for (let i = 0; i < nextPieces.length; i++) {
-    nextPieces[i].moveTo(0, i * 3);
+    nextPieces[i].moveTo(0, i * 4);
     nextPreview.add(nextPieces[i].blocks);
-    
-    //alert(JSON.stringify(nextPreview.blocks));
   }
   
   drawNextPreview(nextPreview.blocks);
+}
+
+function addGhostPiece() {
+  if (ghostPiece) field.remove(ghostPiece.blocks);
+
+  ghostPiece = new Tetromino(
+    piece.topLeft.x,
+    piece.topLeft.y + 2, 
+    {
+      label: piece.label,
+      rotations: piece.rotations
+    }
+  );
+
+  while (!field.willCollide(ghostPiece.blocks)) {
+    ghostPiece.move(0, 1);
+  }
+
+  ghostPiece.move(0, -1);
+  ghostPiece.label = 'G';
+}
+
+function holdPiece() {
+  if (holdUsed) return;
+
+  const newPiece = heldPiece;
+
+  holdUsed = true;
+
+  field.remove(piece.blocks);
+  heldPiece = piece;
+  heldPiece.moveTo(0, 0);
+  heldPiece.rotation = 0;
+
+  holdView.add(heldPiece.blocks);
+  drawHoldView(heldPiece.blocks);
+
+  if (newPiece) {
+    newPiece.moveTo(3, 2);
+    piece = newPiece;
+  } else {
+    nextPiece();
+  }
 }
 
 function loop() {
@@ -107,6 +155,7 @@ function loop() {
       clearLines();
       nextPiece();
       lockDelay = defaultLockDelay;
+      holdUsed = false;
       gameOver = field.willCollide(piece.blocks);
       framesSinceFall = 0;
       field.add(piece.blocks);
@@ -138,17 +187,10 @@ function loop() {
   framesSinceFall++;
 }
 
-window.addEventListener('softdrop', () => {
-  fallSpeed = 1;
-});
-
-window.addEventListener('endsoftdrop', () => {
-  fallSpeed = getFallSpeed();
-});
-
-window.addEventListener('harddrop', () => {
-  lockDelay = 0;
-});
+window.addEventListener('softdrop', () => fallSpeed = 1);
+window.addEventListener('endsoftdrop', () => fallSpeed = getFallSpeed());
+window.addEventListener('harddrop', () => lockDelay = 0);
+window.addEventListener('holdpiece', holdPiece);
 
 nextPiece();
 

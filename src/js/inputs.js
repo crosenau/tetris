@@ -35,11 +35,11 @@ function trackKeys(event) {
   }
 }
 
-function tryWallKick(grid, piece) {
+function tryWallKick(field, piece) {
   piece.move(-1, 0);
-  if (grid.willCollide(piece.blocks)) {
+  if (field.willCollide(piece.blocks)) {
     piece.move(2, 0);
-    if (grid.willCollide(piece.blocks)) {
+    if (field.willCollide(piece.blocks)) {
       piece.move(-1, 0);
       return false;
     }
@@ -47,11 +47,11 @@ function tryWallKick(grid, piece) {
   return true;
 }
 
-function tryFloorKick(grid, piece) {
+function tryFloorKick(field, piece) {
   piece.move(0, 1);
-  if (grid.willCollide(piece.blocks)) {
+  if (field.willCollide(piece.blocks)) {
     piece.move(0, -2);
-    if (grid.willCollide(piece.blocks)) {
+    if (field.willCollide(piece.blocks)) {
       piece.move(0, 1);
       return false;
     }
@@ -65,20 +65,21 @@ const DAS = 300; // Piece autoshift delay
 const hardDrop = new Event('harddrop');
 const softDrop = new Event('softdrop');
 const endSoftDrop = new Event('endsoftdrop');
+const holdPiece = new Event('holdpiece');
 
-export default function handleKeys(grid, piece, frameLapse) {
+export default function handleKeys(field, piece, frameLapse) {
   const { up, down, left, right, rotateLeft, rotateRight, hold } = keyMap;
 
   if (keyState[up].pressed) {
     if (keyState[up].time === 0) {
       window.dispatchEvent(hardDrop);
-      grid.remove(piece.blocks);
-      while (!grid.willCollide(piece.blocks)) {
+      field.remove(piece.blocks);
+      while (!field.willCollide(piece.blocks)) {
         piece.move(0, 1);
       }
 
       piece.move(0, -1);
-      grid.add(piece.blocks);
+      field.add(piece.blocks);
     }
 
     keyState[up].time += frameLapse;
@@ -94,13 +95,13 @@ export default function handleKeys(grid, piece, frameLapse) {
 
   if (keyState[left].pressed) {
     if (keyState[left].time === 0 || keyState[left].time >= DAS) {
-      grid.remove(piece.blocks);
+      field.remove(piece.blocks);
       piece.move(-1, 0);
-      if (grid.willCollide(piece.blocks)) {
+      if (field.willCollide(piece.blocks)) {
         piece.move(1, 0);
       }
       
-      grid.add(piece.blocks);
+      field.add(piece.blocks);
     }
 
     keyState[left].time += frameLapse;
@@ -108,13 +109,13 @@ export default function handleKeys(grid, piece, frameLapse) {
 
   if (keyState[right].pressed) {
     if (keyState[right].time === 0 || keyState[right].time >= DAS) {
-      grid.remove(piece.blocks);
+      field.remove(piece.blocks);
       piece.move(1, 0);
-      if (grid.willCollide(piece.blocks)) {
+      if (field.willCollide(piece.blocks)) {
         piece.move(-1, 0);
       }
 
-      grid.add(piece.blocks);
+      field.add(piece.blocks);
     }
 
     keyState[right].time += frameLapse;
@@ -122,18 +123,18 @@ export default function handleKeys(grid, piece, frameLapse) {
 
   if (keyState[rotateLeft].pressed) {
     if (keyState[rotateLeft].time === 0) {
-      grid.remove(piece.blocks);
+      field.remove(piece.blocks);
       piece.rotateLeft();
-      if (grid.willCollide(piece.blocks)) {
-        let success = tryWallKick(grid, piece);
+      if (field.willCollide(piece.blocks)) {
+        let success = tryWallKick(field, piece);
 
-        if (!success) success = tryFloorKick(grid, piece);
+        if (!success) success = tryFloorKick(field, piece);
         if (!success) {
-          piece.rotateRight(grid, piece);
+          piece.rotateRight(field, piece);
         }
       }
 
-      grid.add(piece.blocks);
+      field.add(piece.blocks);
     }
 
     keyState[rotateLeft].time += frameLapse;
@@ -141,20 +142,29 @@ export default function handleKeys(grid, piece, frameLapse) {
 
   if (keyState[rotateRight].pressed) {
     if (keyState[rotateRight].time === 0) {
-      grid.remove(piece.blocks);
+      field.remove(piece.blocks);
       piece.rotateRight();
-      if (grid.willCollide(piece.blocks)) {
-        let success = tryWallKick(grid, piece);
+      if (field.willCollide(piece.blocks)) {
+        let success = tryWallKick(field, piece);
 
-        if (!success) success = tryFloorKick(grid, piece);
+        if (!success) success = tryFloorKick(field, piece);
         if (!success) {
           piece.rotateLeft();
         }
       }
 
-      grid.add(piece.blocks);
+      field.add(piece.blocks);
 
     }
+
     keyState[rotateRight].time += frameLapse;
+  }
+
+  if(keyState[hold].pressed) {
+    if (keyState[hold].time === 0) {
+      window.dispatchEvent(holdPiece);
+    }
+
+    keyState[hold].time += frameLapse;
   }
 }

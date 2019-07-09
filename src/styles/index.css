@@ -11,25 +11,32 @@ body {
 }
 
 #game {
-  height: 100%;
+  width: 100vw;
+  height: 50vw;
   display: grid;
-  grid-template-rows: repeat(12, 1fr);
-  grid-template-columns: repeat(12, 1fr);
+  grid-template-columns: repeat(20, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+}
+
+#game * {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+canvas {
+  position: absolute;
 }
 
 #hold-container {
   background-color: #444;
-  grid-area: 2 / 4 / 3 / 5;
+  grid-area: 2 / 8 / 3 / 9;
+
 }
 
 #field-container {
   background-color: #444;
-  grid-area: 2 / 5 / 12 / 9;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
+  grid-area: 2 / 9 / 10 / 13;
 }
 
 #field {
@@ -38,12 +45,7 @@ body {
 
 #next-container {
   background-color: #444;
-  grid-area: 2 / 9 / 5 / 10;
-  padding: 1rem 1rem 0 1rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  grid-area: 2 / 13 / 5 / 14;
 }
 
 #debug {

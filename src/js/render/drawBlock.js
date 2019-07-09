@@ -5,7 +5,8 @@ const blockStyles = {
   J: ['blue', 'darkblue'],
   L: ['orange', 'darkorange'],
   S: ['green', 'darkgreen'],
-  Z: ['red', 'darkred']
+  Z: ['red', 'darkred'],
+  G: ['#0000', '#0000']
 };
 
 export default function drawBlock(block, width, height, ctx) {

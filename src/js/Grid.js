@@ -49,7 +49,7 @@ export default class Grid {
 
       if (x < 0 || x > this.width - 1) return true;
       if (y < 0 || y > this.height - 1) return true;
-      if (this.cells[y][x] !== 0) return true;
+      if (![0, 'G'].includes(this.cells[y][x])) return true;
     }
 
     return false;
