@@ -51,4 +51,13 @@ export default class Tetromino {
 
     return blocks;
   }
+
+  get bottomRight() {
+    const { rotation, rotations, topLeft } = this;
+
+    const x = Math.max(...rotations[rotation].map(vec => vec.x + topLeft.x));
+    const y = Math.max(...rotations[rotation].map(vec => vec.y + topLeft.y));
+
+    return new Vector(x, y);
+  }
 }

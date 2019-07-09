@@ -27,7 +27,6 @@ const holdView = new Grid(HOLD_COLUMNS, HOLD_ROWS);
 const nextPieces = getNextPieces(3);
 
 let piece;
-let ghostPiece;
 let heldPiece;
 let holdUsed = false;
 let gameOver = false;
@@ -35,12 +34,12 @@ let level = 1;
 let defaultLockDelay = 500;
 let lockDelay = defaultLockDelay;
 
-let fallSpeed = getFallSpeed(); // Frames between a piece's descent
+let dropInterval = getdropInterval(); // Frames between a piece's descent
 let lastFrame;
-let frameLapse; // Should this be scoped only in loop()? Input handling uses it
-let framesSinceFall = 0;
+//let frameLapse; // Should this be scoped only in loop()? Input handling uses it
+let framesSinceDrop = 0;
 
-function getFallSpeed() {
+function getdropInterval() {
   return Math.floor(20 / level);
 }
 
@@ -72,7 +71,7 @@ function pieceIsLanded() {
   field.remove(piece.blocks);
   piece.move(0, 1);
   
-  let landed = field.willCollide(piece.blocks);
+  let landed = field.intersects(piece.blocks);
   
   piece.move(0, -1);
   field.add(piece.blocks);
@@ -83,7 +82,7 @@ function nextPiece() {
   piece = nextPieces.shift();
   piece.moveTo(3, 2);
   nextPieces.push(...getNextPieces(1));
-  nextPreview.clearCells();
+  nextPreview.clear();
   
   for (let i = 0; i < nextPieces.length; i++) {
     nextPieces[i].moveTo(0, i * 4);
@@ -91,26 +90,6 @@ function nextPiece() {
   }
   
   drawNextPreview(nextPreview.blocks);
-}
-
-function addGhostPiece() {
-  if (ghostPiece) field.remove(ghostPiece.blocks);
-
-  ghostPiece = new Tetromino(
-    piece.topLeft.x,
-    piece.topLeft.y + 2, 
-    {
-      label: piece.label,
-      rotations: piece.rotations
-    }
-  );
-
-  while (!field.willCollide(ghostPiece.blocks)) {
-    ghostPiece.move(0, 1);
-  }
-
-  ghostPiece.move(0, -1);
-  ghostPiece.label = 'G';
 }
 
 function holdPiece() {
@@ -136,6 +115,37 @@ function holdPiece() {
   }
 }
 
+function addGhostPiece() {
+  field.clear('G');
+  field.remove(piece.blocks);
+
+  const { x, y } = piece.topLeft;
+
+  while (!field.intersects(piece.blocks)) {
+    piece.move(0, 1);
+  }
+
+  piece.move(0, -1);
+
+  const ghostPiece = new Tetromino(
+    piece.topLeft.x,
+    piece.topLeft.y,
+    {
+      label: 'G',
+      rotations: piece.rotations,
+    }
+  );
+
+  ghostPiece.rotation = piece.rotation;
+
+  field.add(ghostPiece.blocks);
+
+  piece.moveTo(x, y);
+  field.add(piece.blocks);
+}
+
+
+
 function loop() {
   window.requestAnimationFrame(loop);
   
@@ -143,7 +153,7 @@ function loop() {
   const now = Date.now();
   
   lastFrame = lastFrame ? lastFrame : Date.now();
-  frameLapse = now - lastFrame;
+  const frameLapse = now - lastFrame;
 
   if (frameLapse < frameInterval) return;
   if (gameOver) return;
@@ -156,25 +166,25 @@ function loop() {
       nextPiece();
       lockDelay = defaultLockDelay;
       holdUsed = false;
-      gameOver = field.willCollide(piece.blocks);
-      framesSinceFall = 0;
+      gameOver = field.intersects(piece.blocks);
+      framesSinceDrop = 0;
       field.add(piece.blocks);
       return;
     } else {
       lockDelay -= frameInterval;
     }
   } else {
-    if (framesSinceFall >= fallSpeed) {
-      framesSinceFall = -1;
-  
+    if (framesSinceDrop >= dropInterval) {
+      framesSinceDrop = -1;
       field.remove(piece.blocks);
       piece.move(0, 1);
-
       field.add(piece.blocks);
     }
   }
 
   handleKeys(field, piece, frameLapse);
+
+  addGhostPiece();
 
   drawField(field.blocks
     .map(block => {
@@ -184,11 +194,11 @@ function loop() {
     .filter(block => block.location.y > -1)
   );
 
-  framesSinceFall++;
+  framesSinceDrop++;
 }
 
-window.addEventListener('softdrop', () => fallSpeed = 1);
-window.addEventListener('endsoftdrop', () => fallSpeed = getFallSpeed());
+window.addEventListener('softdrop', () => dropInterval = 1);
+window.addEventListener('endsoftdrop', () => dropInterval = getdropInterval());
 window.addEventListener('harddrop', () => lockDelay = 0);
 window.addEventListener('holdpiece', holdPiece);
 

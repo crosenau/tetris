@@ -37,9 +37,9 @@ function trackKeys(event) {
 
 function tryWallKick(field, piece) {
   piece.move(-1, 0);
-  if (field.willCollide(piece.blocks)) {
+  if (field.intersects(piece.blocks)) {
     piece.move(2, 0);
-    if (field.willCollide(piece.blocks)) {
+    if (field.intersects(piece.blocks)) {
       piece.move(-1, 0);
       return false;
     }
@@ -49,9 +49,9 @@ function tryWallKick(field, piece) {
 
 function tryFloorKick(field, piece) {
   piece.move(0, 1);
-  if (field.willCollide(piece.blocks)) {
+  if (field.intersects(piece.blocks)) {
     piece.move(0, -2);
-    if (field.willCollide(piece.blocks)) {
+    if (field.intersects(piece.blocks)) {
       piece.move(0, 1);
       return false;
     }
@@ -74,7 +74,7 @@ export default function handleKeys(field, piece, frameLapse) {
     if (keyState[up].time === 0) {
       window.dispatchEvent(hardDrop);
       field.remove(piece.blocks);
-      while (!field.willCollide(piece.blocks)) {
+      while (!field.intersects(piece.blocks)) {
         piece.move(0, 1);
       }
 
@@ -97,7 +97,7 @@ export default function handleKeys(field, piece, frameLapse) {
     if (keyState[left].time === 0 || keyState[left].time >= DAS) {
       field.remove(piece.blocks);
       piece.move(-1, 0);
-      if (field.willCollide(piece.blocks)) {
+      if (field.intersects(piece.blocks)) {
         piece.move(1, 0);
       }
       
@@ -111,7 +111,7 @@ export default function handleKeys(field, piece, frameLapse) {
     if (keyState[right].time === 0 || keyState[right].time >= DAS) {
       field.remove(piece.blocks);
       piece.move(1, 0);
-      if (field.willCollide(piece.blocks)) {
+      if (field.intersects(piece.blocks)) {
         piece.move(-1, 0);
       }
 
@@ -125,7 +125,7 @@ export default function handleKeys(field, piece, frameLapse) {
     if (keyState[rotateLeft].time === 0) {
       field.remove(piece.blocks);
       piece.rotateLeft();
-      if (field.willCollide(piece.blocks)) {
+      if (field.intersects(piece.blocks)) {
         let success = tryWallKick(field, piece);
 
         if (!success) success = tryFloorKick(field, piece);
@@ -144,7 +144,7 @@ export default function handleKeys(field, piece, frameLapse) {
     if (keyState[rotateRight].time === 0) {
       field.remove(piece.blocks);
       piece.rotateRight();
-      if (field.willCollide(piece.blocks)) {
+      if (field.intersects(piece.blocks)) {
         let success = tryWallKick(field, piece);
 
         if (!success) success = tryFloorKick(field, piece);

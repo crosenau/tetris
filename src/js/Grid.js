@@ -37,28 +37,33 @@ export default class Grid {
    * @param {Array} blocks Array of objects { location: Vector, label: String }
    */
   remove(blocks) {
-    // Change cells coordinates to 0
+    // Change cells values to 0
     for (let block of blocks) {
       this.cells[block.location.y][block.location.x] = 0;
     }
   }
 
-  willCollide(blocks) {
+  intersects(blocks) {
     for (let block of blocks) {
       const { x, y } = block.location;
 
       if (x < 0 || x > this.width - 1) return true;
       if (y < 0 || y > this.height - 1) return true;
+      // Ghost blocks ('G') are ignored for intersections
       if (![0, 'G'].includes(this.cells[y][x])) return true;
     }
 
     return false;
   }
   
-  clearCells() {
+  clear(label) {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        this.cells[y][x] = 0;
+        if (!label) {
+          this.cells[y][x] = 0;
+        } else if (this.cells[y][x] === label) {
+          this.cells[y][x] = 0;
+        }
       }
     }
     

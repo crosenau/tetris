@@ -48,43 +48,43 @@ describe('Grid', function() {
     });
   });
 
-  context('willCollide() for 2 overlapping T Tetrominos', function() {
+  context('intersects() for 2 overlapping T Tetrominos', function() {
     it('should return true', function() {
       grid.add(t.blocks);
 
       t.move(1, 0);
       
-      const collision = grid.willCollide(t.blocks);
+      const collision = grid.intersects(t.blocks);
 
       expect(collision).to.equal(true);
     });
   });
 
-  context('willCollide() for T Tetromino outside grid x bounds', function() {
+  context('intersects() for T Tetromino outside grid x bounds', function() {
     it('should return true', function() {
       t.move(9, 0);
 
-      const collision = grid.willCollide(t.blocks);
+      const collision = grid.intersects(t.blocks);
 
       expect(collision).to.equal(true);
     });
   });
 
-  context('willCollide() for T Tetromino outside grid y bounds', function() {
+  context('intersects() for T Tetromino outside grid y bounds', function() {
     it('should return true', function() {
       t.move(-10, 20);
 
-      const collision = grid.willCollide(t.blocks);
+      const collision = grid.intersects(t.blocks);
 
       expect(collision).to.equal(true);
     });
   });
 
-  context('willCollide() for T Tetromino within grid bounds and not overlapping exising blocks', function() {
+  context('intersects() for T Tetromino within grid bounds and not overlapping exising blocks', function() {
     it('should return false', function() {
       t.move(0, -15);
 
-      const collision = grid.willCollide(t.blocks);
+      const collision = grid.intersects(t.blocks);
 
       expect(collision).to.equal(false);
 
