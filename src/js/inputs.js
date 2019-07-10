@@ -6,19 +6,19 @@ let keyMap = {
   up: 38,
   right: 39,
   down: 40,
-  rotateLeft: 90,
-  rotateRight: 88,
-  hold: 65
+  rotateLeft: 90, // z
+  rotateRight: 88, // x
+  hold: 65 // a
 };
 
 let keyState = {
-  [keyMap.left]: { pressed: false, time: 0 }, // left
-  [keyMap.up]: { pressed: false, time: 0 }, // up
-  [keyMap.right]: { pressed: false, time: 0 }, // right
-  [keyMap.down]: { pressed: false, time: 0 }, // down
-  [keyMap.rotateLeft]: { pressed: false, time: 0 }, // z (rotate Left)
-  [keyMap.rotateRight]: { pressed: false, time: 0 }, // x (rotate Right)
-  [keyMap.hold]: { pressed: false, time: 0 }, // a (hold)
+  [keyMap.left]: { pressed: false, time: 0 },
+  [keyMap.up]: { pressed: false, time: 0 },
+  [keyMap.right]: { pressed: false, time: 0 },
+  [keyMap.down]: { pressed: false, time: 0 },
+  [keyMap.rotateLeft]: { pressed: false, time: 0 },
+  [keyMap.rotateRight]: { pressed: false, time: 0 },
+  [keyMap.hold]: { pressed: false, time: 0 },
 };
 
 function trackKeys(event) {
@@ -35,29 +35,49 @@ function trackKeys(event) {
   }
 }
 
-function tryWallKick(field, piece) {
-  piece.move(-1, 0);
-  if (field.intersects(piece.blocks)) {
-    piece.move(2, 0);
-    if (field.intersects(piece.blocks)) {
-      piece.move(-1, 0);
-      return false;
+const rotationTests = {
+  I: {
+    '0To1': [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]],
+    '1To0': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, 2]],
+    '1To2': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]],
+    '2To1': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
+    '2To3': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, -2]],
+    '3To2': [[0, 0], [-2, 0], [1, 0],	[-2, 1], [1, -2]],
+    '3To0': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
+    '0To3': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]]
+  },
+  others: {
+    '0To1': [[0, 0], [-1, 0], [-1, -1], [ 0, 2], [-1, 2]],
+    '1To0': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+    '1To2': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+    '2To1': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+    '2To3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+    '3To2': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+    '3To0': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+    '0To3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]]
+  },
+};
+
+function testRotation(grid, piece, initRotation, toRotation) {
+  // In case rotation occurs right when next piece spawns
+  if (initRotation === toRotation) return;
+  
+  const initX = piece.topLeft.x;
+  const initY = piece.topLeft.y;
+
+  const tests = piece.label === 'I' ? rotationTests.I : rotationTests.others;
+  const rotationsKey = `${initRotation}To${toRotation}`;
+
+  for (let test of tests[rotationsKey]) {
+    piece.move(test[0], test[1]);
+    if (grid.intersects(piece.blocks)) {
+      piece.moveTo(initX, initY);
+    } else {
+      return true;
     }
   }
-  return true;
-}
 
-function tryFloorKick(field, piece) {
-  piece.move(0, 1);
-  if (field.intersects(piece.blocks)) {
-    piece.move(0, -2);
-    if (field.intersects(piece.blocks)) {
-      piece.move(0, 1);
-      return false;
-    }
-  }
-
-  return true;
+  return false;
 }
 
 const DAS = 300; // Piece autoshift delay
@@ -67,19 +87,19 @@ const softDrop = new Event('softdrop');
 const endSoftDrop = new Event('endsoftdrop');
 const holdPiece = new Event('holdpiece');
 
-export default function handleKeys(field, piece, frameLapse) {
+export default function handleKeys(grid, piece, frameLapse) {
   const { up, down, left, right, rotateLeft, rotateRight, hold } = keyMap;
 
   if (keyState[up].pressed) {
     if (keyState[up].time === 0) {
       window.dispatchEvent(hardDrop);
-      field.remove(piece.blocks);
-      while (!field.intersects(piece.blocks)) {
+      grid.remove(piece.blocks);
+      while (!grid.intersects(piece.blocks)) {
         piece.move(0, 1);
       }
 
       piece.move(0, -1);
-      field.add(piece.blocks);
+      grid.add(piece.blocks);
     }
 
     keyState[up].time += frameLapse;
@@ -95,13 +115,13 @@ export default function handleKeys(field, piece, frameLapse) {
 
   if (keyState[left].pressed) {
     if (keyState[left].time === 0 || keyState[left].time >= DAS) {
-      field.remove(piece.blocks);
+      grid.remove(piece.blocks);
       piece.move(-1, 0);
-      if (field.intersects(piece.blocks)) {
+      if (grid.intersects(piece.blocks)) {
         piece.move(1, 0);
       }
       
-      field.add(piece.blocks);
+      grid.add(piece.blocks);
     }
 
     keyState[left].time += frameLapse;
@@ -109,13 +129,13 @@ export default function handleKeys(field, piece, frameLapse) {
 
   if (keyState[right].pressed) {
     if (keyState[right].time === 0 || keyState[right].time >= DAS) {
-      field.remove(piece.blocks);
+      grid.remove(piece.blocks);
       piece.move(1, 0);
-      if (field.intersects(piece.blocks)) {
+      if (grid.intersects(piece.blocks)) {
         piece.move(-1, 0);
       }
 
-      field.add(piece.blocks);
+      grid.add(piece.blocks);
     }
 
     keyState[right].time += frameLapse;
@@ -123,18 +143,16 @@ export default function handleKeys(field, piece, frameLapse) {
 
   if (keyState[rotateLeft].pressed) {
     if (keyState[rotateLeft].time === 0) {
-      field.remove(piece.blocks);
-      piece.rotateLeft();
-      if (field.intersects(piece.blocks)) {
-        let success = tryWallKick(field, piece);
+      const initRotation = piece.rotation;
 
-        if (!success) success = tryFloorKick(field, piece);
-        if (!success) {
-          piece.rotateRight(field, piece);
-        }
+      grid.remove(piece.blocks);
+      piece.rotateLeft();
+
+      if (!testRotation(grid, piece, initRotation, piece.rotation)) {
+        piece.rotateRight();
       }
 
-      field.add(piece.blocks);
+      grid.add(piece.blocks);
     }
 
     keyState[rotateLeft].time += frameLapse;
@@ -142,19 +160,16 @@ export default function handleKeys(field, piece, frameLapse) {
 
   if (keyState[rotateRight].pressed) {
     if (keyState[rotateRight].time === 0) {
-      field.remove(piece.blocks);
-      piece.rotateRight();
-      if (field.intersects(piece.blocks)) {
-        let success = tryWallKick(field, piece);
+      const initRotation = piece.rotation;
 
-        if (!success) success = tryFloorKick(field, piece);
-        if (!success) {
-          piece.rotateLeft();
-        }
+      grid.remove(piece.blocks);
+      piece.rotateRight();
+
+      if (!testRotation(grid, piece, initRotation, piece.rotation)) {
+        piece.rotateLeft();
       }
 
-      field.add(piece.blocks);
-
+      grid.add(piece.blocks);
     }
 
     keyState[rotateRight].time += frameLapse;
