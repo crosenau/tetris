@@ -80,7 +80,13 @@ function pieceIsLanded() {
 
 function nextPiece() {
   piece = nextPieces.shift();
-  piece.moveTo(3, 2);
+
+  // Piece spawn position
+  piece.label === 'I' ? piece.moveTo(3, 1) : piece.moveTo(3, 2);
+
+  while (field.intersects(piece.blocks) && piece.topLeft.y > 0) {
+    piece.move(0, -1);
+  }
   nextPieces.push(...getNextPieces(1));
   nextPreview.clear();
   
