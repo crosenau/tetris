@@ -14,11 +14,12 @@ body {
   width: 100vw;
   height: 50vw;
   display: grid;
-  grid-template-columns: repeat(20, 1fr);
-  grid-template-rows: repeat(10, 1fr);
+  grid-template-columns: repeat(20, calc(100vw / 20));
+  grid-template-rows: repeat(10, calc(50vw / 10));
 }
 
-#game * {
+#game #hold-container, #field-container, #next-container {
+  padding: 0.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -47,6 +48,34 @@ canvas {
   background-color: #444;
   grid-area: 2 / 13 / 5 / 14;
 }
+
+.stats {
+  color: white;
+  font-size: 1.3rem;
+  padding-left: 0.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+#level-container {
+  grid-area: 6 / 13 / 7 / 15;
+}
+
+#lines-container {
+  grid-area: 7 / 13 / 8 / 15;
+}
+
+#score-container {
+  grid-area: 8 / 13 / 9 / 15;
+}
+
+
+
 
 #debug {
   color: white;

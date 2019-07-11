@@ -1,3 +1,5 @@
+import { DAS } from './constants';
+
 window.addEventListener('keydown', event => trackKeys(event));
 window.addEventListener('keyup', event => trackKeys(event));
 
@@ -79,8 +81,6 @@ function testRotation(grid, piece, initRotation, toRotation) {
 
   return false;
 }
-
-const DAS = 300; // Piece autoshift delay
 
 const hardDrop = new Event('harddrop');
 const softDrop = new Event('softdrop');

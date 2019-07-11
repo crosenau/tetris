@@ -8,4 +8,7 @@ export const NEXT_ROWS = 12;
 export const HOLD_COLUMNS = 4;
 export const HOLD_ROWS = 4;
 
+export const LOCK_DELAY = 500;
+export const DAS = 300;
+
 export const FPS = 60;

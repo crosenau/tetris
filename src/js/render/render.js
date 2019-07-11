@@ -29,6 +29,10 @@ setDimensions(fieldCanvas);
 setDimensions(nextCanvas);
 setDimensions(holdCanvas);
 
+const levelDisplay = document.querySelector('#level');
+const linesDisplay = document.querySelector('#lines');
+const scoreDisplay = document.querySelector('#score');
+
 export function drawField(blocks) {
   drawGrid(blocks, FIELD_ROWS - HIDDEN_ROWS, FIELD_COLUMNS, fieldCanvas);
 }
@@ -39,4 +43,10 @@ export function drawNextPreview(blocks) {
 
 export function drawHoldView(blocks) {
   drawGrid(blocks, HOLD_ROWS, HOLD_COLUMNS, holdCanvas);
+}
+
+export function drawStats(level, lines, score) {
+  levelDisplay.innerText = String(level);
+  linesDisplay.innerText = String(lines);
+  scoreDisplay.innerText = String(score);
 }

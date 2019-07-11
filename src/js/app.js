@@ -3,7 +3,12 @@ import Tetromino from './Tetromino';
 import { getNextPieces } from './randomTetromino';
 import handleKeys from './inputs';
 import Vector from './Vector';
-import { drawField, drawNextPreview, drawHoldView } from './render/render';
+import {
+  drawField,
+  drawNextPreview,
+  drawHoldView,
+  drawStats,
+} from './render/render';
 
 import {
   FIELD_COLUMNS,
@@ -13,12 +18,11 @@ import {
   NEXT_ROWS,
   HOLD_COLUMNS,
   HOLD_ROWS,
-  FPS
+  FPS,
+  LOCK_DELAY
 } from './constants';
 
 import '../styles/index.css';
-
-const debug = document.querySelector('#debug');
 
 const field = new Grid(FIELD_COLUMNS, FIELD_ROWS);
 const nextPreview = new Grid(NEXT_COLUMNS, NEXT_ROWS);
@@ -31,16 +35,17 @@ let heldPiece;
 let holdUsed = false;
 let gameOver = false;
 let level = 1;
-let defaultLockDelay = 500;
-let lockDelay = defaultLockDelay;
+let lines = 0;
+let score = 0;
+let lockDelay = LOCK_DELAY;
 
-let dropInterval = getdropInterval(); // Frames between a piece's descent
 let lastFrame;
 //let frameLapse; // Should this be scoped only in loop()? Input handling uses it
 let framesSinceDrop = 0;
+let dropInterval; // Frames between a piece's descent
 
-function getdropInterval() {
-  return Math.floor(20 / level);
+function setdropInterval() {
+  dropInterval = Math.floor(20 / level);
 }
 
 function clearLines() {
@@ -65,6 +70,17 @@ function clearLines() {
       rowsCleared++;
     }
   }
+
+  updateStats(rowsCleared);
+}
+
+function updateStats(rowsCleared) {
+  lines += rowsCleared;
+  level = Math.floor(lines / 10) + 1;
+  score += rowsCleared * 100 * level;
+
+  drawStats(level, lines, score);
+  setdropInterval();
 }
 
 function pieceIsLanded() {
@@ -87,6 +103,7 @@ function nextPiece() {
   while (field.intersects(piece.blocks) && piece.topLeft.y > 0) {
     piece.move(0, -1);
   }
+  
   nextPieces.push(...getNextPieces(1));
   nextPreview.clear();
   
@@ -170,7 +187,7 @@ function loop() {
     if (lockDelay < 1) {
       clearLines();
       nextPiece();
-      lockDelay = defaultLockDelay;
+      lockDelay = LOCK_DELAY;
       holdUsed = false;
       gameOver = field.intersects(piece.blocks);
       framesSinceDrop = 0;
@@ -203,11 +220,22 @@ function loop() {
   framesSinceDrop++;
 }
 
+// Piece movements from input
+function hardDrop() {}
+function softDrop() {}
+function moveLeft() {}
+function moveRight() {}
+function rotateLeft() {}
+function rotateRight() {}
+function testRotation() {}
+
 window.addEventListener('softdrop', () => dropInterval = 1);
-window.addEventListener('endsoftdrop', () => dropInterval = getdropInterval());
+window.addEventListener('endsoftdrop', setdropInterval);
 window.addEventListener('harddrop', () => lockDelay = 0);
 window.addEventListener('holdpiece', holdPiece);
 
 nextPiece();
+setdropInterval();
+drawStats(level, lines, score);
 
 loop();
