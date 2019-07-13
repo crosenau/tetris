@@ -1,85 +1,18 @@
 body {
   background-color: #222;
   margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#game {
-  width: 100vw;
-  height: 50vw;
-  display: grid;
-  grid-template-columns: repeat(20, calc(100vw / 20));
-  grid-template-rows: repeat(10, calc(50vw / 10));
-}
-
-#game #hold-container, #field-container, #next-container {
-  padding: 0.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 canvas {
-  position: absolute;
+  background-color: #222;
 }
-
-#hold-container {
-  background-color: #444;
-  grid-area: 2 / 8 / 3 / 9;
-
-}
-
-#field-container {
-  background-color: #444;
-  grid-area: 2 / 9 / 10 / 13;
-}
-
-#field {
-  background-color: black;
-}
-
-#next-container {
-  background-color: #444;
-  grid-area: 2 / 13 / 5 / 14;
-}
-
-.stats {
-  color: white;
-  font-size: 1.3rem;
-  padding-left: 0.5rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.label {
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-#level-container {
-  grid-area: 6 / 13 / 7 / 15;
-}
-
-#lines-container {
-  grid-area: 7 / 13 / 8 / 15;
-}
-
-#score-container {
-  grid-area: 8 / 13 / 9 / 15;
-}
-
-
-
 
 #debug {
   color: white;
   position: fixed;
   bottom: 0;
-  right: 0;
+  left: 0;
 }
