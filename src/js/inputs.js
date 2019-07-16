@@ -1,4 +1,4 @@
-import { DAS } from './constants';
+import { DAS, FIELD_ROWS } from './constants';
 
 
 export default class InputHandler {
@@ -65,9 +65,9 @@ export default class InputHandler {
     }
   }
 
-  testRotation(initRotation, toRotation) {
+  testRotation(fromRotation, toRotation) {
     // In case rotation occurs right when next piece spawns
-    if (initRotation === toRotation) return;
+    if (fromRotation === toRotation) return;
     
     const { field, piece } = this.game;
     const initX = piece.topLeft.x;
@@ -77,7 +77,7 @@ export default class InputHandler {
       ? this.rotationTests.I
       : this.rotationTests.others;
     
-      const key = `${initRotation}To${toRotation}`;
+      const key = `${fromRotation}To${toRotation}`;
   
     for (let test of tests[key]) {
       piece.move(test[0], test[1]);
@@ -98,22 +98,16 @@ export default class InputHandler {
   
     if (keyState[up].pressed) {
       if (keyState[up].time === 0) {
+        this.game.drop(piece, FIELD_ROWS);
         this.game.lockPiece();
-        field.remove(piece.blocks);
-        while (!field.intersects(piece.blocks)) {
-          piece.move(0, 1);
-        }
-  
-        piece.move(0, -1);
-        field.add(piece.blocks);
       }
   
       keyState[up].time += dt;
     }
   
     if (keyState[down].pressed) {
-      if (keyState[down].time === 0) {
-        this.game.softDrop();
+      if (keyState[down].time === 0 && this.game.gravity < 0.75) {
+        this.game.setGravity(0.75);
       }
       
       keyState[down].time += dt;
@@ -121,15 +115,12 @@ export default class InputHandler {
     
     if (keyState[left].pressed) {
       if (keyState[left].time === 0 || keyState[left].time >= DAS) {
-        field.remove(piece.blocks);
         piece.move(-1, 0);
         if (field.intersects(piece.blocks)) {
           piece.move(1, 0);
         } else {
           this.game.resetLockDelay();
         }
-        
-        field.add(piece.blocks);
       }
   
       keyState[left].time += dt;
@@ -137,15 +128,12 @@ export default class InputHandler {
   
     if (keyState[right].pressed) {
       if (keyState[right].time === 0 || keyState[right].time >= DAS) {
-        field.remove(piece.blocks);
         piece.move(1, 0);
         if (field.intersects(piece.blocks)) {
           piece.move(-1, 0);
         } else {
           this.game.resetLockDelay();
         }
-  
-        field.add(piece.blocks);
       }
   
       keyState[right].time += dt;
@@ -153,18 +141,14 @@ export default class InputHandler {
   
     if (keyState[rotateLeft].pressed) {
       if (keyState[rotateLeft].time === 0) {
-        const initRotation = piece.rotation;
+        const fromRotation = piece.rotation;
   
-        field.remove(piece.blocks);
         piece.rotateLeft();
-  
-        if (!this.testRotation(initRotation, piece.rotation)) {
+        if (!this.testRotation(fromRotation, piece.rotation)) {
           piece.rotateRight();
         } else {
           this.game.resetLockDelay();
         }
-  
-        field.add(piece.blocks);
       }
   
       keyState[rotateLeft].time += dt;
@@ -172,18 +156,14 @@ export default class InputHandler {
   
     if (keyState[rotateRight].pressed) {
       if (keyState[rotateRight].time === 0) {
-        const initRotation = piece.rotation;
+        const fromRotation = piece.rotation;
   
-        field.remove(piece.blocks);
         piece.rotateRight();
-  
-        if (!this.testRotation(initRotation, piece.rotation)) {
+        if (!this.testRotation(fromRotation, piece.rotation)) {
           piece.rotateLeft();
         } else {
           this.game.resetLockDelay();
         }
-  
-        field.add(piece.blocks);
       }
   
       keyState[rotateRight].time += dt;
@@ -198,7 +178,7 @@ export default class InputHandler {
     }
 
     if (!keyState[down].pressed && keyState[down].time > 0) {
-      this.game.setDropInterval();
+      this.game.setGravity();
       keyState[down].time = 0;
     } 
   }

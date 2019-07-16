@@ -1,4 +1,4 @@
-import Vector from './Vector';
+import Vector from './vector';
 
 export default class Grid {
   constructor(width, height) {
@@ -32,7 +32,7 @@ export default class Grid {
     }
   }
 
-    /**
+  /**
    * Remove an array of blocks from grid
    * @param {Array} blocks Array of objects { location: Vector, label: String }
    */
@@ -49,7 +49,7 @@ export default class Grid {
 
       if (x < 0 || x > this.width - 1) return true;
       if (y < 0 || y > this.height - 1) return true;
-      // Ghost blocks ('G') are ignored for intersections
+      // Ghost blocks ('G') SPAWN_DELAY ignored for intersections
       if (![0, 'G'].includes(this.cells[y][x])) return true;
     }
 

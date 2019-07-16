@@ -1,10 +1,9 @@
-import Grid from './Grid';
-import Tetromino from './Tetromino';
+import Grid from './grid';
+import Tetromino from './tetromino';
 import { getNextPieces } from './randomTetromino';
 import InputHanlder from './inputs';
-import Vector from './Vector';
+import Vector from './vector';
 import Renderer from './renderer';
-
 import {
   FIELD_COLUMNS,
   FIELD_ROWS,
@@ -13,7 +12,8 @@ import {
   NEXT_ROWS,
   HOLD_COLUMNS,
   HOLD_ROWS,
-  LOCK_DELAY
+  LOCK_DELAY,
+  SPAWN_DELAY
 } from './constants';
 
 import parseMilliseconds from 'parse-ms';
@@ -34,7 +34,9 @@ function digitalTime(ms) {
     }
   }
 
-  return time.replace(/:$/, '');
+  return time
+    .replace(/:$/, '')
+    .replace(/00$/, '0');
 }
 
 const GAMESTATE = {
@@ -57,14 +59,16 @@ export default class Game {
     this.heldPiece = null;
     this.holdUsed = false;
     this.gameOver = false;
-    this.level = 1
+    this.level = 1;
     this.lines = 0;
     this.score = 0;
     this.lockDelay = LOCK_DELAY;
     this.lockDelayResets = 0;
-
-    this.framesSinceDrop = 0;
-    this.dropInterval; // Frames between a piece's descent
+    
+    // Number of rows to drop each frame
+    this.gravity = 2** (this.level * 0.62) / 256;
+    this.g = 0; // drop piece when g >= 1
+    this.spawnDelay = 0;
     
     this.inputHanlder = new InputHanlder(this);
 
@@ -82,16 +86,26 @@ export default class Game {
   startGame() {
     this.nextPieces = getNextPieces(3);
     this.nextPiece();
-    this.setDropInterval();
+    this.setGravity();
     this.gamestate = GAMESTATE.RUNNING;
     this.startTime = Date.now();
   }
 
-  setDropInterval() {
-    this.dropInterval = Math.floor(20 / this.level);
+  setGravity(gravity = 2** (this.level * 0.62) / 256) {
+    this.gravity = gravity;
   }
 
-  clearLines() {
+  drop(piece = this.piece, rows) {
+    for (let i = 0; i <= rows; i++) {
+      if (!this.field.intersects(piece.blocks)) {
+        piece.move(0, 1);
+      }
+    }
+
+    piece.move(0, -1);
+  }
+
+  clearRows() {
     const { blocks } = this.field;
   
     let rowsCleared = 0;
@@ -115,31 +129,30 @@ export default class Game {
     }
   
     this.updateStats(rowsCleared);
+    this.setGravity();
+
   }
 
-  updateStats(rowsCleared) {
-    this.lines += rowsCleared;
+  updateStats(rowsCleSPAWN_DELAYd) {
+    this.lines += rowsCleSPAWN_DELAYd;
     this.level = Math.max(this.level, Math.floor(this.lines / 10) + 1);
-    this.score = rowsCleared === 0
+    this.score = rowsCleSPAWN_DELAYd === 0
       ? this.score 
-      : this.score + 2**(rowsCleared - 1) * 100 * this.level;
+      : this.score + 2**(rowsCleSPAWN_DELAYd - 1) * 100 * this.level;
 
     this.renderer.drawStats({
       level: this.level,
       lines: this.lines,
       score: this.score
     });
-    this.setDropInterval();
   }
 
   pieceIsLanded() {
-    this.field.remove(this.piece.blocks);
     this.piece.move(0, 1);
     
     let landed = this.field.intersects(this.piece.blocks);
     
     this.piece.move(0, -1);
-    this.field.add(this.piece.blocks);
     return landed;
   }
 
@@ -191,15 +204,10 @@ export default class Game {
 
   addGhostPiece() {
     this.field.clear('G');
-    this.field.remove(this.piece.blocks);
   
     const { x, y } = this.piece.topLeft;
-  
-    while (!this.field.intersects(this.piece.blocks)) {
-      this.piece.move(0, 1);
-    }
-  
-    this.piece.move(0, -1);
+
+    this.drop(this.piece, FIELD_ROWS);
   
     const ghostPiece = new Tetromino(
       this.piece.topLeft.x,
@@ -215,7 +223,6 @@ export default class Game {
     this.field.add(ghostPiece.blocks);
   
     this.piece.moveTo(x, y);
-    this.field.add(this.piece.blocks);
   }
 
   lockPiece() {
@@ -233,41 +240,45 @@ export default class Game {
       this.lockDelay = LOCK_DELAY;
       this.lockDelayResets++;
     }
-
-  }
-
-  softDrop() {
-    this.dropInterval = 1;
   }
 
   update(dt) {
     if (this.gamestate === GAMESTATE.RUNNING) {
       if (this.gameOver) return;
+
+      if (this.spawnDelay > 0) {
+        this.spawnDelay -= dt;
+        return;
+      }
+
+      this.field.remove(this.piece.blocks);
   
       if (this.pieceIsLanded()) {
         if (this.lockDelay < 1) {
-          this.clearLines();
+          this.field.add(this.piece.blocks);
+          this.clearRows();
           this.nextPiece();
           this.resetLockDelay({ clearLockDelayResets: true });
           this.holdUsed = false;
           this.gameOver = this.field.intersects(this.piece.blocks);
-          this.framesSinceDrop = 0;
-          this.field.add(this.piece.blocks);
-          return;
+          this.g = 0;
+          this.spawnDelay = SPAWN_DELAY;
         } else {
           this.lockDelay -= dt;
         }
       } else {
-        if (this.framesSinceDrop >= this.dropInterval) {
-          this.framesSinceDrop = -1;
-          this.field.remove(this.piece.blocks);
-          this.piece.move(0, 1);
-          this.field.add(this.piece.blocks);
+        if (this.g >= 1) {
+          this.drop(this.piece, Math.floor(this.g));
+          this.g = 0;
         }
       }
   
-      this.inputHanlder.handleKeys(dt);
-      this.addGhostPiece();
+      if (this.spawnDelay < 1) {
+        this.inputHanlder.handleKeys(dt);
+        this.addGhostPiece();
+        this.field.add(this.piece.blocks);
+      }
+
     
       this.renderer.drawField(this.field.blocks
         .map(block => {
@@ -279,11 +290,13 @@ export default class Game {
 
       this.renderer.drawStats({ time: digitalTime(Date.now() - this.startTime) });
     
-      this.framesSinceDrop++;
+      this.g += this.gravity;
 
       debug.innerText = JSON.stringify({
         lockDelay: this.lockDelay, 
-        lockDelayResets: this.lockDelayResets
+        lockDelayResets: this.lockDelayResets,
+        gravity: this.gravity,
+        g: this.g
       });
     }
   }

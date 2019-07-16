@@ -1,4 +1,4 @@
-import Tetromino from './Tetromino';
+import Tetromino from './tetromino';
 import { J, L, T, O, I, S, Z } from './shapes';
 
 const { floor, random } = Math;
