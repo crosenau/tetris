@@ -16,10 +16,8 @@ function loop(timestamp) {
 
   if (dt < frameInterval) return;
   
-  lastUpdate = timestamp - (dt % frameInterval);
+  lastUpdate = timestamp;
   game.update(dt);
 }
 
 requestAnimationFrame(loop);
-
-game.startGame();

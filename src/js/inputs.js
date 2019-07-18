@@ -1,4 +1,4 @@
-import { DAS, FIELD_ROWS } from './constants';
+import { DAS, FIELD_ROWS, GAMESTATE } from './constants';
 
 
 export default class InputHandler {
@@ -12,7 +12,8 @@ export default class InputHandler {
       down: 40,
       rotateLeft: 90, // z
       rotateRight: 88, // x
-      hold: 65 // a
+      hold: 65, // a
+      start: 13 // enter
     };  
     this.keyState = {
       [this.keyMap.left]: { pressed: false, time: 0 },
@@ -22,6 +23,7 @@ export default class InputHandler {
       [this.keyMap.rotateLeft]: { pressed: false, time: 0 },
       [this.keyMap.rotateRight]: { pressed: false, time: 0 },
       [this.keyMap.hold]: { pressed: false, time: 0 },
+      [this.keyMap.start]: { pressed: false, time: 0 }
     };
     this.rotationTests = {
       I: {
@@ -92,94 +94,113 @@ export default class InputHandler {
   }
 
   handleKeys(dt) {
-    const { up, down, left, right, rotateLeft, rotateRight, hold } = this.keyMap;
+    const { up, down, left, right, rotateLeft, rotateRight, hold, start } = this.keyMap;
     const { keyState } = this;
     const { field, piece } = this.game;
   
-    if (keyState[up].pressed) {
-      if (keyState[up].time === 0) {
-        this.game.drop(piece, FIELD_ROWS);
-        this.game.lockPiece();
-      }
-  
-      keyState[up].time += dt;
-    }
-  
-    if (keyState[down].pressed) {
-      if (keyState[down].time === 0 && this.game.gravity < 0.75) {
-        this.game.setGravity(0.75);
-      }
+    switch (this.game.gameState) {
+      case GAMESTATE.MENU: {
+        if (keyState[start].pressed && keyState[start].time === 0) {
+          this.game.startCountdown();
+        }
+
+        break;
+      };
+      case GAMESTATE.RUNNING: {
+        if (keyState[start].pressed && keyState[start].time === 0) {
+          this.game.togglePause();
+        }
+
+        if (keyState[up].pressed && keyState[up].time === 0) {
+          this.game.drop(piece, FIELD_ROWS);
+          this.game.lockPiece();
+        }
       
-      keyState[down].time += dt;
-    }
-    
-    if (keyState[left].pressed) {
-      if (keyState[left].time === 0 || keyState[left].time >= DAS) {
-        piece.move(-1, 0);
-        if (field.intersects(piece.blocks)) {
-          piece.move(1, 0);
-        } else {
-          this.game.resetLockDelay();
+        if (
+          keyState[down].pressed 
+          && keyState[down].time === 0 
+          && this.game.gravity < 0.75
+        ) {
+          this.game.setGravity(0.75);
         }
-      }
-  
-      keyState[left].time += dt;
-    }
-  
-    if (keyState[right].pressed) {
-      if (keyState[right].time === 0 || keyState[right].time >= DAS) {
-        piece.move(1, 0);
-        if (field.intersects(piece.blocks)) {
+        
+        if (
+          keyState[left].pressed 
+          && (keyState[left].time === 0 || keyState[left].time >= DAS)
+        ) {
           piece.move(-1, 0);
-        } else {
-          this.game.resetLockDelay();
+          if (field.intersects(piece.blocks)) {
+            piece.move(1, 0);
+          } else {
+            this.game.resetLockDelay();
+          }
         }
-      }
-  
-      keyState[right].time += dt;
-    }
-  
-    if (keyState[rotateLeft].pressed) {
-      if (keyState[rotateLeft].time === 0) {
-        const fromRotation = piece.rotation;
-  
-        piece.rotateLeft();
-        if (!this.testRotation(fromRotation, piece.rotation)) {
-          piece.rotateRight();
-        } else {
-          this.game.resetLockDelay();
+      
+        if (
+          keyState[right].pressed 
+          && (keyState[right].time === 0 || keyState[right].time >= DAS)
+        ) {
+          piece.move(1, 0);
+          if (field.intersects(piece.blocks)) {
+            piece.move(-1, 0);
+          } else {
+            this.game.resetLockDelay();
+          }
         }
-      }
-  
-      keyState[rotateLeft].time += dt;
-    }
-  
-    if (keyState[rotateRight].pressed) {
-      if (keyState[rotateRight].time === 0) {
-        const fromRotation = piece.rotation;
-  
-        piece.rotateRight();
-        if (!this.testRotation(fromRotation, piece.rotation)) {
+      
+        if (keyState[rotateLeft].pressed && keyState[rotateLeft].time === 0) {
+          const fromRotation = piece.rotation;
+    
           piece.rotateLeft();
-        } else {
-          this.game.resetLockDelay();
+          if (!this.testRotation(fromRotation, piece.rotation)) {
+            piece.rotateRight();
+          } else {
+            this.game.resetLockDelay();
+          }
         }
-      }
-  
-      keyState[rotateRight].time += dt;
-    }
-  
-    if (keyState[hold].pressed) {
-      if (keyState[hold].time === 0) {
-        this.game.holdPiece();
-      }
-  
-      keyState[hold].time += dt;
+      
+        if (keyState[rotateRight].pressed && keyState[rotateRight].time === 0) {
+          const fromRotation = piece.rotation;
+    
+          piece.rotateRight();
+          if (!this.testRotation(fromRotation, piece.rotation)) {
+            piece.rotateLeft();
+          } else {
+            this.game.resetLockDelay();
+          }
+        }
+      
+        if (keyState[hold].pressed && keyState[hold].time === 0) {
+          this.game.holdPiece();
+        }
+    
+        if (!keyState[down].pressed && keyState[down].time > 0) {
+          this.game.setGravity();
+          keyState[down].time = 0;
+        }
+        
+        break;
+      };
+      case GAMESTATE.PAUSED: {
+        if (keyState[start].pressed && keyState[start].time === 0) {
+          this.game.togglePause();
+        }
+
+        break;
+      };
+      case GAMESTATE.GAMEOVER: {
+        if (keyState[start].pressed && keyState[start].time === 0) {
+          this.game.menu();
+        }
+
+        break;
+      };
     }
 
-    if (!keyState[down].pressed && keyState[down].time > 0) {
-      this.game.setGravity();
-      keyState[down].time = 0;
-    } 
+    for (let key in keyState) {
+      if (keyState[key].pressed) {
+        keyState[key].time += dt;
+      }
+    }
   }
 }

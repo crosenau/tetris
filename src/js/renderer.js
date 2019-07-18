@@ -5,8 +5,7 @@ import {
   NEXT_COLUMNS,
   NEXT_ROWS,
   HOLD_COLUMNS,
-  HOLD_ROWS,
-  BLOCK_STYLES
+  HOLD_ROWS
 } from './constants';
 
 const { floor } = Math;
@@ -25,90 +24,59 @@ const blockStyles = {
   G: ['#ccca', '#aaaa']
 };
 
-const debug = document.querySelector('#debug');
-
 export default class Renderer {
   constructor(width, height) {
     canvas.width = width;
     canvas.height = height;
 
+    // Divide canvas into grid for positioning of elements
     this.cellWidth = width / 40;
     this.cellHeight = height / 30;
-  }
 
-  drawField(blocks) {
-    const style = {
+    // Positioning and style for game field. Used in several draw methods
+    this.fieldStyle = {
       top: 1 * this.cellHeight,
       left: 13 * this.cellWidth,
       bottom: 29 * this.cellHeight,
       right: 27 * this.cellWidth,
-      paddingX: this.cellWidth / 2,
-      paddingY: this.cellHeight / 2,
-      paddingFill: '#444',
-      innerFill: 'black',
+      padLeft: this.cellWidth / 2,
+      padRight: this.cellWidth / 2,
+      padTop: this.cellHeight / 2,
+      padBottom: this.cellHeight / 2,
+      padFill: '#444',
+      fill: 'black',
     };
-    
-    this.drawGrid(blocks, FIELD_ROWS - HIDDEN_ROWS, FIELD_COLUMNS, style);
-  }
-
-  drawNextPreview(blocks) {
-    const style = {
-      top: 1 * this.cellHeight,
-      left: (27 * this.cellWidth) - 1,
-      bottom: 11 * this.cellHeight,
-      right: 31 * this.cellWidth,
-      paddingX: this.cellWidth / 2,
-      paddingY: this.cellHeight / 2,
-      paddingFill: '#444',
-      innerFill: '#444',
-    };
-
-    this.drawGrid(blocks, NEXT_ROWS, NEXT_COLUMNS, style);
-  }
-
-  drawHoldView(blocks) {
-    const style = {
-      top: 1 * this.cellHeight,
-      left: (9 * this.cellWidth),
-      bottom: 5 * this.cellHeight,
-      right: 13 * this.cellWidth,
-      paddingX: this.cellWidth / 2,
-      paddingY: this.cellHeight / 2,
-      paddingFill: '#444',
-      innerFill: '#444',
-    };
-
-    this.drawGrid(blocks, HOLD_ROWS, HOLD_COLUMNS, style);
   }
 
   drawStats(stats) {
     const style = {
-      top: 13 * this.cellHeight,
+      top: 14 * this.cellHeight,
       left: 27 * this.cellWidth,
-      bottom: 17 * this.cellHeight,
+      bottom: 18 * this.cellHeight,
       right: 32 * this.cellWidth,
-      paddingX: this.cellWidth / 2,
-      paddingY: this.cellHeight / 2,
+      padLeft: this.cellWidth / 2,
+      padTop: this.cellHeight / 2,
       labelFont: `bold ${this.cellHeight}px Arial`,
       dataFont: `${this.cellHeight * 0.9}px Arial`,
-      fill: 'white'
+      textAlign: 'left',
+      textFill: 'white'
     };
 
     this.drawStat('Level', stats.level, style);
     this.drawStat('Lines', stats.lines, {
       ...style,
-      top: 17 * this.cellHeight,
-      bottom: 21 * this.cellHeight
+      top: 18 * this.cellHeight,
+      bottom: 22 * this.cellHeight
     });
     this.drawStat('Score', stats.score, {
       ...style,
-      top: 21 * this.cellHeight,
-      bottom: 25 * this.cellHeight
+      top: 22 * this.cellHeight,
+      bottom: 26 * this.cellHeight
     });
     this.drawStat('Time', stats.time, {
       ...style,
-      top: 25 * this.cellHeight,
-      bottom: 29 * this.cellHeight
+      top: 26 * this.cellHeight,
+      bottom: 30 * this.cellHeight
     });
   }
 
@@ -116,28 +84,145 @@ export default class Renderer {
     if (data === undefined) return; 
     
     ctx.clearRect(
-      style.left + style.paddingX,
-      style.top + style.paddingY - this.cellHeight,
-      style.right - style.left - style.paddingX,
-      style.bottom - style.top - style.paddingY - this.cellHeight
+      style.left + 1,
+      style.top - this.cellHeight + 1,
+      style.right - style.left,
+      style.bottom - style.top - this.cellHeight
     );
 
+    ctx.textAlign = style.textAlign;
     ctx.font = style.labelFont;
-    ctx.fillStyle = style.fill;
+    ctx.fillStyle = style.textFill;
     ctx.fillText(
       label,
-      style.left + style.paddingX,
-      style.top + style.paddingY
+      style.left + style.padLeft,
+      style.top + style.padTop
     );
     ctx.font = style.dataFont;
     ctx.fillText(
       String(data),
-      style.left + style.paddingX,
-      style.top + style.paddingY + style.paddingY * 2.5
+      style.left + style.padLeft,
+      style.top + style.padTop + style.padTop * 2.5
     );
   }
 
-  drawGrid(blocks, rows, columns, style) {
+  drawMenu() {
+    const style = {
+      ...this.fieldStyle,
+      fill: 'black',
+      font: `${this.cellHeight * 0.9}px Arial`,
+      textFill: 'white',
+      textAlign: 'center'
+    };
+
+    this.drawTextOverlay('Press Enter to Start', style);
+  }
+
+  drawGameOver() {
+    const style = {
+      ...this.fieldStyle,
+      fill: '#00000003',
+      font: `${this.cellHeight * 0.9}px Arial`,
+      textFill: 'white',
+      textAlign: 'center'
+    };
+
+    this.drawTextOverlay('Game Over', style);
+  }
+
+  drawPaused() {
+    const style = {
+      ...this.fieldStyle,
+      fill: '#000a',
+      font: `${this.cellHeight * 0.9}px Arial`,
+      textFill: 'white',
+      textAlign: 'center'
+    };
+
+    this.drawTextOverlay('Paused', style);
+  }
+
+  drawCountdown(text) {
+    const style = {
+      ...this.fieldStyle,
+      fill: 'black',
+      font: `${this.cellHeight * 1.5}px Arial`,
+      textFill: 'white',
+      textAlign: 'center'
+    };
+
+    this.drawTextOverlay(text, style);
+  }
+
+  drawTextOverlay(text, style) {
+    const width = style.right - style.left - style.padLeft - style.padRight;
+    const height = style.bottom - style.top - style.padTop - style.padBottom;
+
+    ctx.fillStyle = style.fill;
+    ctx.fillRect(
+      style.left + style.padLeft - 1,
+      style.top + style.padTop - 1,
+      width + 1,
+      height + 1
+    );
+
+    ctx.fillStyle = style.textFill;
+    ctx.font = style.font;
+    ctx.textAlign = style.textAlign;
+    ctx.fillText(
+      text,
+      style.left + style.padLeft + width / 2,
+      style.top + style.padTop + height / 2,
+    );
+  }
+
+  drawField(blocks) {
+    const style = this.fieldStyle;
+
+    this.drawGrid(blocks, FIELD_ROWS - HIDDEN_ROWS, FIELD_COLUMNS, style);
+  }
+
+  drawNextPreview(blocks) {
+    const style = {
+      top: 1 * this.cellHeight,
+      left: (27 * this.cellWidth) - 1,
+      bottom: 13 * this.cellHeight,
+      right: 31 * this.cellWidth,
+      padLeft: this.cellWidth / 2,
+      padRight: this.cellWidth / 2,
+      padTop: this.cellHeight * 2.5,
+      padBottom: this.cellHeight / 2,
+      padFill: '#444',
+      fill: '#444',
+      labelFont: `bold ${this.cellHeight / 1.5}px Arial`,
+      textAlign: 'center',
+      textFill: 'white'
+    };
+
+    this.drawGrid(blocks, NEXT_ROWS, NEXT_COLUMNS, style, 'Next');
+  }
+
+  drawHoldView(blocks) {
+    const style = {
+      top: 1 * this.cellHeight,
+      left: 9 * this.cellWidth,
+      bottom: 7 * this.cellHeight,
+      right: 13 * this.cellWidth + 1,
+      padLeft: this.cellWidth / 2,
+      padRight: this.cellWidth / 2,
+      padTop: this.cellHeight * 2.5,
+      padBottom: this.cellHeight / 2,
+      padFill: '#444',
+      fill: '#444',
+      labelFont: `bold ${this.cellHeight / 1.5}px Arial`,
+      textAlign: 'center',
+      textFill: 'white'
+    };
+
+    this.drawGrid(blocks, HOLD_ROWS, HOLD_COLUMNS, style , 'Hold');
+  }
+
+  drawGrid(blocks, rows, columns, style, label) {
     const width = style.right - style.left;
     const height = style.bottom - style.top;
     
@@ -147,23 +232,35 @@ export default class Renderer {
       floor(style.width),
       floor(style.height)
     );
-    ctx.fillStyle = style.paddingFill;
+    ctx.fillStyle = style.padFill;
     ctx.fillRect(
       floor(style.left),
       floor(style.top),
       floor(width),
       floor(height)
     );
-    ctx.fillStyle = style.innerFill;
+
+    if (label) {
+      ctx.fillStyle = style.textFill;
+      ctx.font = style.labelFont;
+      ctx.textAlign = style.textAlign;
+      ctx.fillText(
+        label,
+        style.left + width / 2,
+        style.top + style.padTop / 2,
+      );
+    }
+
+    ctx.fillStyle = style.fill;
     ctx.fillRect(
-      floor(style.left + style.paddingX),
-      floor(style.top + style.paddingY),
-      floor(width - style.paddingX * 2),
-      floor(height - style.paddingY * 2)
+      floor(style.left + style.padLeft),
+      floor(style.top + style.padTop),
+      floor(width - style.padLeft - style.padRight),
+      floor(height - style.padTop - style.padBottom)
     );
 
-    const blockWidth = width / columns - style.paddingX / columns * 2;
-    const blockHeight = height / rows - style.paddingY / rows * 2;
+    const blockWidth = width / columns - (style.padLeft + style.padRight) / columns;
+    const blockHeight = height / rows - (style.padTop + style.padBottom) / rows;
 
     if (blocks) {
       for (let block of blocks) {
@@ -171,8 +268,8 @@ export default class Renderer {
           block,
           blockWidth,
           blockHeight,
-          style.top + style.paddingY,
-          style.left + style.paddingX
+          style.top + style.padTop,
+          style.left + style.padLeft
         );
       }
     }

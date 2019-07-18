@@ -8,12 +8,9 @@ import {
   FIELD_COLUMNS,
   FIELD_ROWS,
   HIDDEN_ROWS,
-  NEXT_COLUMNS,
-  NEXT_ROWS,
-  HOLD_COLUMNS,
-  HOLD_ROWS,
   LOCK_DELAY,
-  SPAWN_DELAY
+  SPAWN_DELAY,
+  GAMESTATE
 } from './constants';
 
 import parseMilliseconds from 'parse-ms';
@@ -39,60 +36,73 @@ function digitalTime(ms) {
     .replace(/00$/, '0');
 }
 
-const GAMESTATE = {
-  MENU: 0,
-  RUNNING: 1,
-  PAUSED: 2,
-  GAMEOVER: 3
-}
-
-const debug = document.querySelector('#debug');
-
 export default class Game {
   constructor(width, height) {
     this.field = new Grid(FIELD_COLUMNS, FIELD_ROWS);
-    this.nextPreview = new Grid(NEXT_COLUMNS, NEXT_ROWS);
-    this.holdView = new Grid(HOLD_COLUMNS, HOLD_ROWS);
     this.renderer = new Renderer(width, height);
+    this.inputHanlder = new InputHanlder(this);
+
+    this.gameState = GAMESTATE.MENU;
     
-    this.gamestate = GAMESTATE.MENU;
+    this.renderer.drawHoldView();
+    this.renderer.drawNextPreview();
+    this.renderer.drawField();
+  }
+
+  menu() {
+    this.gameState = GAMESTATE.MENU;
+  }
+
+  startCountdown() {
+    this.gameState = GAMESTATE.COUNTDOWN;
+
+    /*
+     Set game variables to initial state
+    */
+    this.field.clear();
+    this.nextPieces = getNextPieces(3);
     this.heldPiece = null;
     this.holdUsed = false;
-    this.gameOver = false;
     this.level = 1;
     this.lines = 0;
     this.score = 0;
     this.lockDelay = LOCK_DELAY;
     this.lockDelayResets = 0;
+    this.countdown = 3000;
     
-    // Number of rows to drop each frame
-    this.gravity = 2** (this.level * 0.62) / 256;
-    this.g = 0; // drop piece when g >= 1
-    this.spawnDelay = 0;
-    
-    this.inputHanlder = new InputHanlder(this);
+    this.nextPiece();
+    this.setGravity();
 
-    this.renderer.drawHoldView();
-    this.renderer.drawNextPreview();
-    this.renderer.drawField();
+    // Drop piece g rows when g >= 1
+    // this.gravity is added to g each frame
+    this.g = 0;
+
+    this.spawnDelay = 0;
+
+    this.playTime = 0;
     this.renderer.drawStats({
-      level:this.level,
+      level: this.level,
       lines: this.lines,
       score: this.score,
       time: digitalTime(0)
     });
+    this.renderer.drawHoldView();
   }
 
   startGame() {
-    this.nextPieces = getNextPieces(3);
-    this.nextPiece();
-    this.setGravity();
-    this.gamestate = GAMESTATE.RUNNING;
-    this.startTime = Date.now();
+    this.gameState = GAMESTATE.RUNNING;
+  }
+
+  togglePause() {
+    if (this.gameState === GAMESTATE.RUNNING) {
+      this.gameState = GAMESTATE.PAUSED;
+    } else {
+      this.gameState = GAMESTATE.RUNNING;
+    }
   }
 
   setGravity(gravity = 2** (this.level * 0.62) / 256) {
-    this.gravity = gravity;
+    this.gravity = Math.min(gravity, FIELD_ROWS);
   }
 
   drop(piece = this.piece, rows) {
@@ -133,12 +143,12 @@ export default class Game {
 
   }
 
-  updateStats(rowsCleSPAWN_DELAYd) {
-    this.lines += rowsCleSPAWN_DELAYd;
+  updateStats(rowsCleared) {
+    this.lines += rowsCleared;
     this.level = Math.max(this.level, Math.floor(this.lines / 10) + 1);
-    this.score = rowsCleSPAWN_DELAYd === 0
+    this.score = rowsCleared === 0
       ? this.score 
-      : this.score + 2**(rowsCleSPAWN_DELAYd - 1) * 100 * this.level;
+      : this.score + 2**(rowsCleared - 1) * 100 * this.level;
 
     this.renderer.drawStats({
       level: this.level,
@@ -156,25 +166,32 @@ export default class Game {
     return landed;
   }
 
-  nextPiece() {
-    this.piece = this.nextPieces.shift();
-  
-    // Piece spawn position
-    this.piece.label === 'I' ? this.piece.moveTo(3, 1) : this.piece.moveTo(3, 2);
+  pieceSpawnPosition() {
+    if (this.piece.label === 'I') {
+      this.piece.moveTo(3, 1);
+    } else {
+      this.piece.moveTo(3, 2);
+    }
   
     while (this.field.intersects(this.piece.blocks) && this.piece.topLeft.y > 0) {
       this.piece.move(0, -1);
     }
+  }
+
+  nextPiece() {
+    this.piece = this.nextPieces.shift();
+
+    this.pieceSpawnPosition();
     
     this.nextPieces.push(...getNextPieces(1));
-    this.nextPreview.clear();
+    const blocks = [];
     
     for (let i = 0; i < this.nextPieces.length; i++) {
       this.nextPieces[i].moveTo(0, i * 4);
-      this.nextPreview.add(this.nextPieces[i].blocks);
+      blocks.push(...this.nextPieces[i].blocks);
     }
     
-    this.renderer.drawNextPreview(this.nextPreview.blocks);
+    this.renderer.drawNextPreview(blocks);
   }
 
   holdPiece() {
@@ -190,13 +207,12 @@ export default class Game {
     if (this.heldPiece.bottomRight.x < 3) this.heldPiece.move(1, 0);
     
     this.heldPiece.rotation = 0;
-    this.holdView.add(this.heldPiece.blocks);
     
     this.renderer.drawHoldView(this.heldPiece.blocks);
   
     if (returnedPiece) {
-      returnedPiece.moveTo(3, 2);
       this.piece = returnedPiece;
+      this.pieceSpawnPosition();
     } else {
       this.nextPiece();
     }
@@ -243,61 +259,96 @@ export default class Game {
   }
 
   update(dt) {
-    if (this.gamestate === GAMESTATE.RUNNING) {
-      if (this.gameOver) return;
-
-      if (this.spawnDelay > 0) {
-        this.spawnDelay -= dt;
-        return;
-      }
-
-      this.field.remove(this.piece.blocks);
-  
-      if (this.pieceIsLanded()) {
-        if (this.lockDelay < 1) {
-          this.field.add(this.piece.blocks);
-          this.clearRows();
-          this.nextPiece();
-          this.resetLockDelay({ clearLockDelayResets: true });
-          this.holdUsed = false;
-          this.gameOver = this.field.intersects(this.piece.blocks);
-          this.g = 0;
-          this.spawnDelay = SPAWN_DELAY;
-        } else {
-          this.lockDelay -= dt;
-        }
-      } else {
-        if (this.g >= 1) {
-          this.drop(this.piece, Math.floor(this.g));
-          this.g = 0;
-        }
-      }
-  
-      if (this.spawnDelay < 1) {
+    switch (this.gameState) {
+      case GAMESTATE.MENU: {
+        this.renderer.drawMenu();
         this.inputHanlder.handleKeys(dt);
-        this.addGhostPiece();
-        this.field.add(this.piece.blocks);
-      }
+        break;
+      };
+      case GAMESTATE.COUNTDOWN: {
+        if (this.countdown > 0) {
+          this.renderer.drawCountdown(Math.ceil(this.countdown / 1000));
+        } else if (this.countdown > -1000) {
+          this.renderer.drawCountdown('GO');
+        } else {
+          this.startGame();
+        }
 
+        this.countdown -= dt;
+
+        break;
+      };
+      case GAMESTATE.RUNNING: {
+        if (this.spawnDelay > 0) {
+          this.spawnDelay -= dt;
+          return;
+        }
+  
+        this.field.remove(this.piece.blocks);
     
-      this.renderer.drawField(this.field.blocks
-        .map(block => {
-          block.location.y -= HIDDEN_ROWS;
-          return block;
-        })
-        .filter(block => block.location.y > -1)
-      );
+        if (this.pieceIsLanded()) {
+          if (this.lockDelay < 1) {
+            this.field.add(this.piece.blocks);
+            this.clearRows();
+            this.nextPiece();
+            this.resetLockDelay({ clearLockDelayResets: true });
+            this.holdUsed = false;
+            if (this.field.intersects(this.piece.blocks)) this.gameState = GAMESTATE.GAMEOVER;
 
-      this.renderer.drawStats({ time: digitalTime(Date.now() - this.startTime) });
+            this.g = 0;
+            this.spawnDelay = SPAWN_DELAY;
+          } else {
+            this.lockDelay -= dt;
+          }
+        } else {
+          if (this.g >= 1) {
+            this.drop(this.piece, Math.floor(this.g));
+            this.g = 0;
+          }
+        }
     
-      this.g += this.gravity;
+        if (this.spawnDelay < 1) {
+          this.inputHanlder.handleKeys(dt);
+          this.addGhostPiece();
+          this.field.add(this.piece.blocks);
+        }
+  
+        this.renderer.drawField(this.field.blocks
+          .map(block => {
+            block.location.y -= HIDDEN_ROWS;
+            return block;
+          })
+          .filter(block => block.location.y > -1)
+        );
+  
+        this.playTime += dt;
+        this.renderer.drawStats({
+          time: digitalTime(this.playTime)
+        });
+      
+        this.g += this.gravity;
+      
+        break;
+      };
+      case GAMESTATE.PAUSED: {
+        this.renderer.drawField(this.field.blocks
+          .map(block => {
+            block.location.y -= HIDDEN_ROWS;
+            return block;
+          })
+          .filter(block => block.location.y > -1)
+        );
+        this.renderer.drawPaused();
 
-      debug.innerText = JSON.stringify({
-        lockDelay: this.lockDelay, 
-        lockDelayResets: this.lockDelayResets,
-        gravity: this.gravity,
-        g: this.g
-      });
+        this.inputHanlder.handleKeys(dt);
+
+        break;
+      };
+      case GAMESTATE.GAMEOVER: {
+        this.renderer.drawGameOver();
+        this.inputHanlder.handleKeys(dt);
+        break;
+      };
     }
   }
 }
