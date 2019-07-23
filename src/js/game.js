@@ -4,6 +4,8 @@ import { getNextPieces } from './randomTetromino';
 import InputHanlder from './inputs';
 import Vector from './vector';
 import Renderer from './renderer';
+import Menu from './menu';
+import { digitalTime } from './utils';
 import {
   FIELD_COLUMNS,
   FIELD_ROWS,
@@ -13,34 +15,14 @@ import {
   GAMESTATE
 } from './constants';
 
-import parseMilliseconds from 'parse-ms';
-
 import '../styles/index.css';
-
-function digitalTime(ms) {
-  const { minutes, seconds, milliseconds } = parseMilliseconds(ms);
-  let time = '';
-
-  for (let unit of [minutes, seconds, milliseconds]) {
-    if (unit < 10) {
-      time += `0${unit}:`
-    } else if (unit > 99) {
-      time += String(Math.round(unit / 10));
-    } else {
-      time += `${unit}:`;
-    }
-  }
-
-  return time
-    .replace(/:$/, '')
-    .replace(/00$/, '0');
-}
 
 export default class Game {
   constructor(width, height) {
     this.field = new Grid(FIELD_COLUMNS, FIELD_ROWS);
     this.renderer = new Renderer(width, height);
-    this.inputHanlder = new InputHanlder(this);
+    this.inputHandler = new InputHanlder(this);
+    this.menu = new Menu(this);
 
     this.gameState = GAMESTATE.MENU;
     
@@ -49,15 +31,16 @@ export default class Game {
     this.renderer.drawField();
   }
 
-  menu() {
+  toMenu() {
     this.gameState = GAMESTATE.MENU;
   }
 
-  startCountdown() {
+  startCountdown(goal = false) {
     this.gameState = GAMESTATE.COUNTDOWN;
-
+    
+    this.countdown = 3000;
     /*
-     Set game variables to initial state
+     Set game variables to initial game state
     */
     this.field.clear();
     this.nextPieces = getNextPieces(3);
@@ -68,10 +51,11 @@ export default class Game {
     this.score = 0;
     this.lockDelay = LOCK_DELAY;
     this.lockDelayResets = 0;
-    this.countdown = 3000;
+    this.goal = goal;
     
-    this.nextPiece();
     this.setGravity();
+    this.nextPiece();
+    this.piece = null;
 
     // Drop piece g rows when g >= 1
     // this.gravity is added to g each frame
@@ -140,7 +124,6 @@ export default class Game {
   
     this.updateStats(rowsCleared);
     this.setGravity();
-
   }
 
   updateStats(rowsCleared) {
@@ -261,8 +244,9 @@ export default class Game {
   update(dt) {
     switch (this.gameState) {
       case GAMESTATE.MENU: {
-        this.renderer.drawMenu();
-        this.inputHanlder.handleKeys(dt);
+        this.renderer.drawMenu(this.menu.currentScreen);
+        //console.log(this.menu.currentScreen);
+        this.inputHandler.handleKeys(dt);
         break;
       };
       case GAMESTATE.COUNTDOWN: {
@@ -279,10 +263,16 @@ export default class Game {
         break;
       };
       case GAMESTATE.RUNNING: {
+        if (this.goal && this.lines >= this.goal) {
+          this.gameState = GAMESTATE.GAMEOVER;
+        }
+
         if (this.spawnDelay > 0) {
           this.spawnDelay -= dt;
           return;
         }
+
+        if (!this.piece) this.nextPiece();
   
         this.field.remove(this.piece.blocks);
     
@@ -291,10 +281,12 @@ export default class Game {
             this.field.add(this.piece.blocks);
             this.clearRows();
             this.nextPiece();
+            if (this.field.intersects(this.piece.blocks)) {
+              this.gameState = GAMESTATE.GAMEOVER;
+            }
+            
             this.resetLockDelay({ clearLockDelayResets: true });
             this.holdUsed = false;
-            if (this.field.intersects(this.piece.blocks)) this.gameState = GAMESTATE.GAMEOVER;
-
             this.g = 0;
             this.spawnDelay = SPAWN_DELAY;
           } else {
@@ -308,7 +300,7 @@ export default class Game {
         }
     
         if (this.spawnDelay < 1) {
-          this.inputHanlder.handleKeys(dt);
+          this.inputHandler.handleKeys(dt);
           this.addGhostPiece();
           this.field.add(this.piece.blocks);
         }
@@ -340,13 +332,18 @@ export default class Game {
         );
         this.renderer.drawPaused();
 
-        this.inputHanlder.handleKeys(dt);
+        this.inputHandler.handleKeys(dt);
 
         break;
       };
       case GAMESTATE.GAMEOVER: {
-        this.renderer.drawGameOver();
-        this.inputHanlder.handleKeys(dt);
+        if (this.goal && this.lines >= this.goal) {
+          this.renderer.drawGameOver('All Clear!');          
+        } else {
+          this.renderer.drawGameOver();
+        }
+
+        this.inputHandler.handleKeys(dt);
         break;
       };
     }

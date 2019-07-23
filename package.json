@@ -11,6 +11,7 @@
   "author": "crosenau",
   "license": "ISC",
   "dependencies": {
+    "keycode": "^2.2.0",
     "parse-ms": "^2.1.0"
   },
   "devDependencies": {

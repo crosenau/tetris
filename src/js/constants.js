@@ -9,10 +9,18 @@ export const HOLD_COLUMNS = 4;
 export const HOLD_ROWS = 4;
 
 export const LOCK_DELAY = 500;
-export const SPAWN_DELAY = 33;
-export const DAS = 233;
+export const SPAWN_DELAY = 100;
+export const DAS = 200;
 
-export const FPS = 60;
+export const LEFT = 'LEFT';
+export const RIGHT = 'RIGHT';
+export const UP = 'UP';
+export const DOWN = 'DOWN';
+export const ROTATE_LEFT = 'ROTATE_LEFT';
+export const ROTATE_RIGHT = 'ROTATE_RIGHT';
+export const HOLD = 'HOLD';
+export const ENTER = 'ENTER';
+export const ESCAPE = 'ESCAPE';
 
 export const GAMESTATE = {
   MENU: 0,
@@ -21,3 +29,5 @@ export const GAMESTATE = {
   PAUSED: 3,
   GAMEOVER: 4
 }
+
+export const FPS = 60;

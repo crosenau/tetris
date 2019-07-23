@@ -106,75 +106,107 @@ export default class Renderer {
     );
   }
 
-  drawMenu() {
-    const style = {
-      ...this.fieldStyle,
-      fill: 'black',
-      font: `${this.cellHeight * 0.9}px Arial`,
-      textFill: 'white',
-      textAlign: 'center'
-    };
+  drawMenu(screen) {
+    this.fieldOverlay();
 
-    this.drawTextOverlay('Press Enter to Start', style);
-  }
-
-  drawGameOver() {
-    const style = {
-      ...this.fieldStyle,
-      fill: '#00000003',
-      font: `${this.cellHeight * 0.9}px Arial`,
-      textFill: 'white',
-      textAlign: 'center'
-    };
-
-    this.drawTextOverlay('Game Over', style);
-  }
-
-  drawPaused() {
-    const style = {
-      ...this.fieldStyle,
-      fill: '#000a',
-      font: `${this.cellHeight * 0.9}px Arial`,
-      textFill: 'white',
-      textAlign: 'center'
-    };
-
-    this.drawTextOverlay('Paused', style);
-  }
-
-  drawCountdown(text) {
-    const style = {
-      ...this.fieldStyle,
-      fill: 'black',
-      font: `${this.cellHeight * 1.5}px Arial`,
-      textFill: 'white',
-      textAlign: 'center'
-    };
-
-    this.drawTextOverlay(text, style);
-  }
-
-  drawTextOverlay(text, style) {
+    const style = this.fieldStyle;
     const width = style.right - style.left - style.padLeft - style.padRight;
     const height = style.bottom - style.top - style.padTop - style.padBottom;
 
-    ctx.fillStyle = style.fill;
-    ctx.fillRect(
-      style.left + style.padLeft - 1,
-      style.top + style.padTop - 1,
-      width + 1,
-      height + 1
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+
+    ctx.font = `${this.cellHeight * 1.5}px Arial`;
+    ctx.fillText(
+      screen.title,
+      style.left + style.padLeft + width / 2,
+      style.top + style.padTop + this.cellHeight * 3,
     );
 
-    ctx.fillStyle = style.textFill;
-    ctx.font = style.font;
-    ctx.textAlign = style.textAlign;
+    let y = 
+      style.top + style.padTop + height / 2 
+      - Math.floor(screen.options.length / 2) * (this.cellHeight + style.padTop);
+
+    ctx.font = `${this.cellHeight * 1}px Arial`;
+
+    for (let opt of screen.options) {
+      ctx.fillText(
+        opt,
+        style.left + style.padLeft + width / 2,
+        y
+      );
+
+      y += this.cellHeight + style.padTop;
+    }
+  }
+
+  drawGameOver(text = 'Game Over') {
+    this.fieldOverlay('#00000003');
+
+    const style = this.fieldStyle;
+    const width = style.right - style.left - style.padLeft - style.padRight;
+    const height = style.bottom - style.top - style.padTop - style.padBottom;
+
+    ctx.fillStyle = 'white';
+    ctx.font = `${this.cellHeight * 0.9}px Arial`;
+    ctx.textAlign = 'center';
     ctx.fillText(
       text,
       style.left + style.padLeft + width / 2,
       style.top + style.padTop + height / 2,
     );
   }
+
+  drawPaused() {
+    this.fieldOverlay('#000a');
+
+    const style = this.fieldStyle;
+    const width = style.right - style.left - style.padLeft - style.padRight;
+    const height = style.bottom - style.top - style.padTop - style.padBottom;
+
+    ctx.fillStyle = 'white';
+    ctx.font = `${this.cellHeight * 0.9}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText(
+      'Paused',
+      style.left + style.padLeft + width / 2,
+      style.top + style.padTop + height / 2,
+    );
+  }
+
+  drawCountdown(text) {
+    this.fieldOverlay();
+
+    const style = this.fieldStyle;
+    const width = style.right - style.left - style.padLeft - style.padRight;
+    const height = style.bottom - style.top - style.padTop - style.padBottom;
+    
+    ctx.fillStyle = 'white';
+    ctx.font = `${this.cellHeight * 1.5}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText(
+      text,
+      style.left + style.padLeft + width / 2,
+      style.top + style.padTop + height / 2,
+    );
+  }
+
+  fieldOverlay(color = 'black') {
+    const width = 
+      this.fieldStyle.right - this.fieldStyle.left 
+      - this.fieldStyle.padLeft - this.fieldStyle.padRight;
+    const height = 
+      this.fieldStyle.bottom - this.fieldStyle.top 
+      - this.fieldStyle.padTop - this.fieldStyle.padBottom;
+
+    ctx.fillStyle = color;
+    ctx.fillRect(
+      this.fieldStyle.left + this.fieldStyle.padLeft - 1,
+      this.fieldStyle.top + this.fieldStyle.padTop - 1,
+      width + 1,
+      height + 1
+    );
+  } 
 
   drawField(blocks) {
     const style = this.fieldStyle;

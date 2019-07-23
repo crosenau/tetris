@@ -1,69 +1,103 @@
-import { DAS, FIELD_ROWS, GAMESTATE } from './constants';
+import { 
+  DAS, 
+  FIELD_ROWS,
+  LEFT,
+  RIGHT,
+  UP,
+  DOWN,
+  ROTATE_LEFT,
+  ROTATE_RIGHT,
+  HOLD,
+  ENTER,
+  ESCAPE,
+  GAMESTATE
+} from './constants';
 
+const rotationTests = {
+  I: {
+    '0To1': [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]],
+    '1To0': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, 2]],
+    '1To2': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]],
+    '2To1': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
+    '2To3': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, -2]],
+    '3To2': [[0, 0], [-2, 0], [1, 0],	[-2, 1], [1, -2]],
+    '3To0': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
+    '0To3': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]]
+  },
+  others: {
+    '0To1': [[0, 0], [-1, 0], [-1, -1], [ 0, 2], [-1, 2]],
+    '1To0': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+    '1To2': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+    '2To1': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+    '2To3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+    '3To2': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+    '3To0': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+    '0To3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]]
+  },
+};
 
 export default class InputHandler {
   constructor(game) {
     this.game = game;
 
     this.keyMap = {
-      left: 37,
-      up: 38,
-      right: 39,
-      down: 40,
-      rotateLeft: 90, // z
-      rotateRight: 88, // x
-      hold: 65, // a
-      start: 13 // enter
-    };  
-    this.keyState = {
-      [this.keyMap.left]: { pressed: false, time: 0 },
-      [this.keyMap.up]: { pressed: false, time: 0 },
-      [this.keyMap.right]: { pressed: false, time: 0 },
-      [this.keyMap.down]: { pressed: false, time: 0 },
-      [this.keyMap.rotateLeft]: { pressed: false, time: 0 },
-      [this.keyMap.rotateRight]: { pressed: false, time: 0 },
-      [this.keyMap.hold]: { pressed: false, time: 0 },
-      [this.keyMap.start]: { pressed: false, time: 0 }
+      [LEFT]: 37,
+      [RIGHT]: 39,
+      [UP]: 38,
+      [DOWN]: 40,
+      [ROTATE_LEFT]: 90, // z
+      [ROTATE_RIGHT]: 88, // x
+      [HOLD]: 65, // a
+      [ENTER]: 13, // enter
+      [ESCAPE]: 27
     };
-    this.rotationTests = {
-      I: {
-        '0To1': [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]],
-        '1To0': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, 2]],
-        '1To2': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]],
-        '2To1': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
-        '2To3': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, -2]],
-        '3To2': [[0, 0], [-2, 0], [1, 0],	[-2, 1], [1, -2]],
-        '3To0': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
-        '0To3': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]]
-      },
-      others: {
-        '0To1': [[0, 0], [-1, 0], [-1, -1], [ 0, 2], [-1, 2]],
-        '1To0': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
-        '1To2': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
-        '2To1': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
-        '2To3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
-        '3To2': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
-        '3To0': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
-        '0To3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]]
-      },
-    };
+
+    this.keyState = this.createKeyState();
+
+    this.unboundKey = { keyCode: null, pressed: false, time: 0 }
+    this.commandToBind = null;
     
     window.addEventListener('keydown', event => this.updateKeyState(event));
     window.addEventListener('keyup', event => this.updateKeyState(event));
   }
 
+  createKeyState() {
+    return {
+      [this.keyMap[LEFT]]: { pressed: false, time: 0 },
+      [this.keyMap[RIGHT]]: { pressed: false, time: 0 },
+      [this.keyMap[UP]]: { pressed: false, time: 0 },
+      [this.keyMap[DOWN]]: { pressed: false, time: 0 },
+      [this.keyMap[ROTATE_LEFT]]: { pressed: false, time: 0 },
+      [this.keyMap[ROTATE_RIGHT]]: { pressed: false, time: 0 },
+      [this.keyMap[HOLD]]: { pressed: false, time: 0 },
+      [this.keyMap[ENTER]]: { pressed: false, time: 0 },
+      [this.keyMap[ESCAPE]]: { pressed: false, time: 0 },
+    };
+  }
+
   updateKeyState(event) {
     const { type, keyCode } = event;
   
-    if (
-      type === 'keydown' 
-      && keyCode in this.keyState 
-      && this.keyState[keyCode].pressed === false
-    ) {
-      this.keyState[keyCode].pressed = true;
-      this.keyState[keyCode].time = 0;
-    } else if (type ==='keyup' && keyCode in this.keyState) {
-      this.keyState[keyCode].pressed = false;
+    switch (type) {
+      case 'keydown': {
+        if (keyCode in this.keyState && !this.keyState[keyCode].pressed) {
+          this.keyState[keyCode].pressed = true;
+          this.keyState[keyCode].time = 0;          
+        } else if (!(keyCode in this.keyState) && !this.unboundKey.pressed) {
+          this.unboundKey.keyCode = keyCode;
+          this.unboundKey.pressed = true;
+          this.unboundKey.time = 0;
+        }
+
+        break;
+      };
+      case 'keyup': {
+        if (keyCode in this.keyState) {
+          this.keyState[keyCode].pressed = false;
+        } else {
+          this.unboundKey.pressed = false;
+        }
+      };
     }
   }
 
@@ -76,8 +110,8 @@ export default class InputHandler {
     const initY = piece.topLeft.y;
   
     const tests = piece.label === 'I' 
-      ? this.rotationTests.I
-      : this.rotationTests.others;
+      ? rotationTests.I
+      : rotationTests.others;
     
       const key = `${fromRotation}To${toRotation}`;
   
@@ -94,20 +128,56 @@ export default class InputHandler {
   }
 
   handleKeys(dt) {
-    const { up, down, left, right, rotateLeft, rotateRight, hold, start } = this.keyMap;
-    const { keyState } = this;
-    const { field, piece } = this.game;
+    const {
+      UP: up, 
+      DOWN: down, 
+      LEFT: left, 
+      RIGHT: right, 
+      ROTATE_LEFT: rotateLeft, 
+      ROTATE_RIGHT: rotateRight, 
+      HOLD: hold, 
+      ENTER: enter, 
+      ESCAPE: escape
+    } = this.keyMap;
+    
+    const { keyState, unboundKey, commandToBind } = this;
+    const { field, piece, menu, gameState } = this.game;
   
-    switch (this.game.gameState) {
+    switch (gameState) {
       case GAMESTATE.MENU: {
-        if (keyState[start].pressed && keyState[start].time === 0) {
-          this.game.startCountdown();
+        if (keyState[enter].pressed && keyState[enter].time === 0) {
+          menu.enter();
+        }
+
+        if (keyState[escape].pressed && keyState[escape].time === 0) {
+          menu.exit();
+        }
+
+        if (
+          keyState[up].pressed 
+          && (keyState[up].time === 0 || keyState[up].time >= DAS * 2)
+        ) {
+          menu.up();
+        }
+
+        if (
+          keyState[down].pressed 
+          && (keyState[down].time === 0 || keyState[down].time >= DAS * 2)
+        ) {
+          menu.down();
+        }
+
+        if (commandToBind && unboundKey.pressed && unboundKey.time === 0) {
+          this.keyMap[commandToBind] = unboundKey.keyCode;
+          this.commandToBind = null;
+          this.keyState = this.createKeyState();
+          this.unboundKey.pressed = false;
         }
 
         break;
       };
       case GAMESTATE.RUNNING: {
-        if (keyState[start].pressed && keyState[start].time === 0) {
+        if (keyState[enter].pressed && keyState[enter].time === 0) {
           this.game.togglePause();
         }
 
@@ -182,15 +252,15 @@ export default class InputHandler {
         break;
       };
       case GAMESTATE.PAUSED: {
-        if (keyState[start].pressed && keyState[start].time === 0) {
+        if (keyState[enter].pressed && keyState[enter].time === 0) {
           this.game.togglePause();
         }
 
         break;
       };
       case GAMESTATE.GAMEOVER: {
-        if (keyState[start].pressed && keyState[start].time === 0) {
-          this.game.menu();
+        if (keyState[enter].pressed && keyState[enter].time === 0) {
+          this.game.toMenu();
         }
 
         break;
@@ -202,5 +272,11 @@ export default class InputHandler {
         keyState[key].time += dt;
       }
     }
+
+    if (unboundKey.pressed === true) unboundKey.time += dt;
+  }
+
+  bindCommand(command) {
+    this.commandToBind = command;
   }
 }
