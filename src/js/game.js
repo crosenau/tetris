@@ -15,8 +15,6 @@ import {
   GAMESTATE
 } from './constants';
 
-import '../styles/index.css';
-
 export default class Game {
   constructor(width, height) {
     this.field = new Grid(FIELD_COLUMNS, FIELD_ROWS);
@@ -338,7 +336,7 @@ export default class Game {
       };
       case GAMESTATE.GAMEOVER: {
         if (this.goal && this.lines >= this.goal) {
-          this.renderer.drawGameOver('All Clear!');          
+          this.renderer.drawGameOver('Excellent!');          
         } else {
           this.renderer.drawGameOver();
         }

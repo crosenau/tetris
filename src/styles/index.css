@@ -1,5 +1,10 @@
+@font-face {
+  font-family: 'Orbitron';
+  src: url('../fonts/Orbitron/Orbitron-Regular.ttf') format('truetype');
+}
+
 body {
-  background-color: #222;
+  background-color: #111;
   margin: 0;
   display: flex;
   justify-content: center;
@@ -11,6 +16,7 @@ canvas {
 }
 
 #debug {
+  font-family: 'Orbitron';
   color: white;
   position: fixed;
   bottom: 0;

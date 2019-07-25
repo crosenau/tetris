@@ -24,6 +24,8 @@ const blockStyles = {
   G: ['#ccca', '#aaaa']
 };
 
+const fontFamily = 'Orbitron';
+
 export default class Renderer {
   constructor(width, height) {
     canvas.width = width;
@@ -53,11 +55,11 @@ export default class Renderer {
       top: 14 * this.cellHeight,
       left: 27 * this.cellWidth,
       bottom: 18 * this.cellHeight,
-      right: 32 * this.cellWidth,
+      right: 33 * this.cellWidth,
       padLeft: this.cellWidth / 2,
       padTop: this.cellHeight / 2,
-      labelFont: `bold ${this.cellHeight}px Arial`,
-      dataFont: `${this.cellHeight * 0.9}px Arial`,
+      font: `bold ${this.cellHeight}px ${fontFamily}`,
+      dataFont: `${this.cellHeight * 0.8}px ${fontFamily}`,
       textAlign: 'left',
       textFill: 'white'
     };
@@ -91,7 +93,7 @@ export default class Renderer {
     );
 
     ctx.textAlign = style.textAlign;
-    ctx.font = style.labelFont;
+    ctx.font = style.font;
     ctx.fillStyle = style.textFill;
     ctx.fillText(
       label,
@@ -116,7 +118,7 @@ export default class Renderer {
     ctx.fillStyle = 'white';
     ctx.textAlign = 'center';
 
-    ctx.font = `${this.cellHeight * 1.5}px Arial`;
+    ctx.font = `${this.cellHeight * 1.5}px ${fontFamily}`;
     ctx.fillText(
       screen.title,
       style.left + style.padLeft + width / 2,
@@ -125,13 +127,14 @@ export default class Renderer {
 
     let y = 
       style.top + style.padTop + height / 2 
-      - Math.floor(screen.options.length / 2) * (this.cellHeight + style.padTop);
+      - floor(screen.options.length / 2) * (this.cellHeight + style.padTop);
 
-    ctx.font = `${this.cellHeight * 1}px Arial`;
-
+    ctx.font = `${this.cellHeight * 0.9}px ${fontFamily}`;
+      
     for (let opt of screen.options) {
+      ctx.fillStyle = opt.selected ? 'white' : '#aaa'
       ctx.fillText(
-        opt,
+        opt.name,
         style.left + style.padLeft + width / 2,
         y
       );
@@ -148,7 +151,7 @@ export default class Renderer {
     const height = style.bottom - style.top - style.padTop - style.padBottom;
 
     ctx.fillStyle = 'white';
-    ctx.font = `${this.cellHeight * 0.9}px Arial`;
+    ctx.font = `${this.cellHeight * 0.9}px ${fontFamily}`;
     ctx.textAlign = 'center';
     ctx.fillText(
       text,
@@ -165,7 +168,7 @@ export default class Renderer {
     const height = style.bottom - style.top - style.padTop - style.padBottom;
 
     ctx.fillStyle = 'white';
-    ctx.font = `${this.cellHeight * 0.9}px Arial`;
+    ctx.font = `${this.cellHeight * 0.9}px ${fontFamily}`;
     ctx.textAlign = 'center';
     ctx.fillText(
       'Paused',
@@ -182,7 +185,7 @@ export default class Renderer {
     const height = style.bottom - style.top - style.padTop - style.padBottom;
     
     ctx.fillStyle = 'white';
-    ctx.font = `${this.cellHeight * 1.5}px Arial`;
+    ctx.font = `${this.cellHeight * 1.5}px ${fontFamily}`;
     ctx.textAlign = 'center';
     ctx.fillText(
       text,
@@ -226,7 +229,7 @@ export default class Renderer {
       padBottom: this.cellHeight / 2,
       padFill: '#444',
       fill: '#444',
-      labelFont: `bold ${this.cellHeight / 1.5}px Arial`,
+      font: `bold ${this.cellHeight / 1.5}px ${fontFamily}`,
       textAlign: 'center',
       textFill: 'white'
     };
@@ -246,7 +249,7 @@ export default class Renderer {
       padBottom: this.cellHeight / 2,
       padFill: '#444',
       fill: '#444',
-      labelFont: `bold ${this.cellHeight / 1.5}px Arial`,
+      font: `bold ${this.cellHeight / 1.5}px ${fontFamily}`,
       textAlign: 'center',
       textFill: 'white'
     };
@@ -274,7 +277,7 @@ export default class Renderer {
 
     if (label) {
       ctx.fillStyle = style.textFill;
-      ctx.font = style.labelFont;
+      ctx.font = style.font;
       ctx.textAlign = style.textAlign;
       ctx.fillText(
         label,

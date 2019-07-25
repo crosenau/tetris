@@ -122,11 +122,7 @@ export default class Menu {
     return {
       title: screen.title,
       options: screen.options.map((opt, i) => {
-        if (i === this.selection) {
-          return `[  ${opt.name}  ]`;
-        } else {
-          return opt.name;
-        }
+        return { name: opt.name, selected: i === this.selection };
       })
     };
   }

@@ -191,7 +191,7 @@ export default class InputHandler {
           && keyState[down].time === 0 
           && this.game.gravity < 0.75
         ) {
-          this.game.setGravity(0.75);
+          this.game.setGravity(1);
         }
         
         if (

@@ -1,6 +1,8 @@
 import Game from './game';
 import { FPS } from './constants';
 
+import '../styles/index.css';
+
 const gameWidth = window.innerHeight * 1.33;
 const gameHeight = window.innerHeight;
 
