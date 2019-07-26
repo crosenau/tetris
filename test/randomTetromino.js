@@ -2,7 +2,7 @@
 
 import chai from 'chai';
 
-import { getNextPieces } from '../src/js/randomTetromino';
+import { getNextPieces } from '../src/js/bag';
 
 const expect = chai.expect;
 
