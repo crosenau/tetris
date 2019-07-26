@@ -113,7 +113,7 @@ export default class InputHandler {
       ? rotationTests.I
       : rotationTests.others;
     
-      const key = `${fromRotation}To${toRotation}`;
+    const key = `${fromRotation}To${toRotation}`;
   
     for (let test of tests[key]) {
       piece.move(test[0], test[1]);
@@ -259,7 +259,10 @@ export default class InputHandler {
         break;
       };
       case GAMESTATE.GAMEOVER: {
-        if (keyState[enter].pressed && keyState[enter].time === 0) {
+        if (
+          (keyState[enter].pressed && keyState[enter].time === 0)
+          || (keyState[escape].pressed && keyState[escape].time === 0)
+        ) {
           this.game.toMenu();
         }
 

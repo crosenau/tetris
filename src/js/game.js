@@ -1,6 +1,6 @@
 import Grid from './grid';
 import Tetromino from './tetromino';
-import { getNextPieces } from './randomTetromino';
+import { getNextPieces } from './bag';
 import InputHanlder from './inputs';
 import Vector from './vector';
 import Renderer from './renderer';
@@ -239,109 +239,125 @@ export default class Game {
     }
   }
 
+  menuLoop(dt) {
+    this.renderer.drawMenu(this.menu.currentScreen);
+    this.inputHandler.handleKeys(dt);
+  }
+
+  countDown(dt) {
+    if (this.countdown > 0) {
+      this.renderer.drawCountdown(Math.ceil(this.countdown / 1000));
+    } else if (this.countdown > -1000) {
+      this.renderer.drawCountdown('GO');
+    } else {
+      this.startGame();
+    }
+
+    this.countdown -= dt;
+  }
+
+  gameLoop(dt) {
+    if (this.goal && this.lines >= this.goal) {
+      this.gameState = GAMESTATE.GAMEOVER;
+    }
+
+    if (this.spawnDelay > 0) {
+      this.spawnDelay -= dt;
+      return;
+    }
+
+    if (!this.piece) this.nextPiece();
+
+    this.field.remove(this.piece.blocks);
+
+    if (this.pieceIsLanded()) {
+      if (this.lockDelay < 1) {
+        this.field.add(this.piece.blocks);
+        this.clearRows();
+        this.nextPiece();
+        if (this.field.intersects(this.piece.blocks)) {
+          this.gameState = GAMESTATE.GAMEOVER;
+        }
+        
+        this.resetLockDelay({ clearLockDelayResets: true });
+        this.holdUsed = false;
+        this.g = 0;
+        this.spawnDelay = SPAWN_DELAY;
+      } else {
+        this.lockDelay -= dt;
+      }
+    } else {
+      if (this.g >= 1) {
+        this.drop(this.piece, Math.floor(this.g));
+        this.g = 0;
+      }
+    }
+
+    if (this.spawnDelay < 1) {
+      this.inputHandler.handleKeys(dt);
+      this.addGhostPiece();
+      this.field.add(this.piece.blocks);
+    }
+
+    this.renderer.drawField(this.field.blocks
+      .map(block => {
+        block.location.y -= HIDDEN_ROWS;
+        return block;
+      })
+      .filter(block => block.location.y > -1)
+    );
+
+    this.playTime += dt;
+    this.renderer.drawStats({
+      time: digitalTime(this.playTime)
+    });
+  
+    this.g += this.gravity;
+  }
+
+  pauseLoop(dt) {
+    this.renderer.drawField(this.field.blocks
+      .map(block => {
+        block.location.y -= HIDDEN_ROWS;
+        return block;
+      })
+      .filter(block => block.location.y > -1)
+    );
+    this.renderer.drawPaused();
+
+    this.inputHandler.handleKeys(dt);
+  }
+
+  gameOverLoop(dt) {
+    if (this.goal && this.lines >= this.goal) {
+      this.renderer.drawGameOver('Excellent!');          
+    } else {
+      this.renderer.drawGameOver();
+    }
+
+    this.inputHandler.handleKeys(dt);
+  }
+
   update(dt) {
     switch (this.gameState) {
       case GAMESTATE.MENU: {
-        this.renderer.drawMenu(this.menu.currentScreen);
-        //console.log(this.menu.currentScreen);
-        this.inputHandler.handleKeys(dt);
+        this.menuLoop(dt);
         break;
       };
       case GAMESTATE.COUNTDOWN: {
-        if (this.countdown > 0) {
-          this.renderer.drawCountdown(Math.ceil(this.countdown / 1000));
-        } else if (this.countdown > -1000) {
-          this.renderer.drawCountdown('GO');
-        } else {
-          this.startGame();
-        }
-
-        this.countdown -= dt;
-
+        this.countDown(dt);
         break;
       };
       case GAMESTATE.RUNNING: {
-        if (this.goal && this.lines >= this.goal) {
-          this.gameState = GAMESTATE.GAMEOVER;
-        }
-
-        if (this.spawnDelay > 0) {
-          this.spawnDelay -= dt;
-          return;
-        }
-
-        if (!this.piece) this.nextPiece();
-  
-        this.field.remove(this.piece.blocks);
-    
-        if (this.pieceIsLanded()) {
-          if (this.lockDelay < 1) {
-            this.field.add(this.piece.blocks);
-            this.clearRows();
-            this.nextPiece();
-            if (this.field.intersects(this.piece.blocks)) {
-              this.gameState = GAMESTATE.GAMEOVER;
-            }
-            
-            this.resetLockDelay({ clearLockDelayResets: true });
-            this.holdUsed = false;
-            this.g = 0;
-            this.spawnDelay = SPAWN_DELAY;
-          } else {
-            this.lockDelay -= dt;
-          }
-        } else {
-          if (this.g >= 1) {
-            this.drop(this.piece, Math.floor(this.g));
-            this.g = 0;
-          }
-        }
-    
-        if (this.spawnDelay < 1) {
-          this.inputHandler.handleKeys(dt);
-          this.addGhostPiece();
-          this.field.add(this.piece.blocks);
-        }
-  
-        this.renderer.drawField(this.field.blocks
-          .map(block => {
-            block.location.y -= HIDDEN_ROWS;
-            return block;
-          })
-          .filter(block => block.location.y > -1)
-        );
-  
-        this.playTime += dt;
-        this.renderer.drawStats({
-          time: digitalTime(this.playTime)
-        });
-      
-        this.g += this.gravity;
-      
+        this.gameLoop(dt);
         break;
       };
       case GAMESTATE.PAUSED: {
-        this.renderer.drawField(this.field.blocks
-          .map(block => {
-            block.location.y -= HIDDEN_ROWS;
-            return block;
-          })
-          .filter(block => block.location.y > -1)
-        );
-        this.renderer.drawPaused();
-
-        this.inputHandler.handleKeys(dt);
-
+        this.pauseLoop(dt);
         break;
       };
       case GAMESTATE.GAMEOVER: {
-        if (this.goal && this.lines >= this.goal) {
-          this.renderer.drawGameOver('Excellent!');          
-        } else {
-          this.renderer.drawGameOver();
-        }
-
-        this.inputHandler.handleKeys(dt);
+        this.gameOverLoop(dt);
         break;
       };
     }
