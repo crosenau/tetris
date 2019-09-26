@@ -9,8 +9,8 @@ export const HOLD_COLUMNS = 4;
 export const HOLD_ROWS = 4;
 
 export const LOCK_DELAY = 500;
-export const SPAWN_DELAY = 100;
-export const DAS = 200;
+export const SPAWN_DELAY = 50;
+export const DELAYED_AUTO_SHIFT = 200;
 
 export const LEFT = 'LEFT';
 export const RIGHT = 'RIGHT';

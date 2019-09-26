@@ -7,6 +7,7 @@ import Renderer from './renderer';
 import Menu from './menu';
 import { digitalTime } from './utils';
 import {
+  DAS,
   FIELD_COLUMNS,
   FIELD_ROWS,
   HIDDEN_ROWS,
@@ -27,6 +28,8 @@ export default class Game {
     this.renderer.drawHoldView();
     this.renderer.drawNextPreview();
     this.renderer.drawField();
+
+    this.level = 1;
   }
 
   toMenu() {
@@ -44,7 +47,7 @@ export default class Game {
     this.nextPieces = getNextPieces(3);
     this.heldPiece = null;
     this.holdUsed = false;
-    this.level = 1;
+    //this.level = 1;
     this.lines = 0;
     this.score = 0;
     this.lockDelay = LOCK_DELAY;
@@ -256,10 +259,21 @@ export default class Game {
     this.countdown -= dt;
   }
 
+  setLevel(lvl) {
+    if (lvl > 0 && lvl < 21) {
+      this.level = lvl;
+    }
+  }
+
   gameLoop(dt) {
     if (this.goal && this.lines >= this.goal) {
       this.gameState = GAMESTATE.GAMEOVER;
     }
+
+    this.playTime += dt;
+    this.renderer.drawStats({
+      time: digitalTime(this.playTime)
+    });
 
     if (this.spawnDelay > 0) {
       this.spawnDelay -= dt;
@@ -306,11 +320,6 @@ export default class Game {
       })
       .filter(block => block.location.y > -1)
     );
-
-    this.playTime += dt;
-    this.renderer.drawStats({
-      time: digitalTime(this.playTime)
-    });
   
     this.g += this.gravity;
   }
@@ -330,7 +339,7 @@ export default class Game {
 
   gameOverLoop(dt) {
     if (this.goal && this.lines >= this.goal) {
-      this.renderer.drawGameOver('Excellent!');          
+      this.renderer.drawGameOver('All Clear!');          
     } else {
       this.renderer.drawGameOver();
     }

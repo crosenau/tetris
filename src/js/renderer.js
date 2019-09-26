@@ -129,7 +129,7 @@ export default class Renderer {
       style.top + style.padTop + height / 2 
       - floor(screen.options.length / 2) * (this.cellHeight + style.padTop);
 
-    ctx.font = `${this.cellHeight * 0.9}px ${fontFamily}`;
+    ctx.font = `${this.cellHeight * 0.75}px ${fontFamily}`;
       
     for (let opt of screen.options) {
       ctx.fillStyle = opt.selected ? 'white' : '#aaa'

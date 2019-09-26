@@ -24,7 +24,7 @@ export default class Menu {
       from: null,
       options: [
         { name: 'New Game', to: this.newGame },
-        { name: 'Controls', to: this.controls }
+        { name: 'Options', to: this.options }
       ]
     };
   }
@@ -34,44 +34,74 @@ export default class Menu {
       title: 'New Game',
       from: this.main,
       options: [
-        { name: 'Marathon', func: () => this.game.startCountdown() },
-        { name: '40 Line Sprint', func: () => this.game.startCountdown(40) },
+        { name: 'Marathon', to: this.selectLevel },
+        { name: '40 Line Sprint', to: () => this.selectLevel(40) },
       ]
     };
   }
 
-  controls() {
+  selectLevel(goal) {
     return {
-      title: 'Controls',
+      title: 'Select Level',
+      from: this.newGame,
+      options: [
+        { 
+          name: `Level: ${this.game.level}`, 
+          leftFunc: () => this.game.setLevel(this.game.level - 1),
+          rightFunc: () => this.game.setLevel(this.game.level + 1),
+          enterFunc: () => this.game.startCountdown(goal)
+        }
+      ]
+    }
+  }
+
+  options() {
+    return {
+      title: 'Options',
       from: this.main,
       options: [
+        { 
+          name: `DAS: ${this.game.inputHandler.das} ms`, 
+          leftFunc: () => this.game.inputHandler.setDas(this.game.inputHandler.das - 10),
+          rightFunc: () => this.game.inputHandler.setDas(this.game.inputHandler.das + 10)
+        },
+        { name: 'Key Bindings', to: this.keyBindings }
+      ]
+    };
+  }
+
+  keyBindings() {
+    return {
+      title: 'Key Bindings',
+      from: this.options,
+      options: [
         {
-          name: `Up / Hard Drop: ${keycode(this.keyMap[UP])}`,
-          func: () => this.game.inputHandler.bindCommand(UP)
+          name: `Menu Up / Hard Drop: ${keycode(this.keyMap[UP])}`,
+          enterFunc: () => this.game.inputHandler.bindCommand(UP)
         },
         {
-          name: `Down / Soft Drop: ${keycode(this.keyMap[DOWN])}`,
-          func: () => this.game.inputHandler.bindCommand(DOWN)
+          name: `Menu Down / Soft Drop: ${keycode(this.keyMap[DOWN])}`,
+          enterFunc: () => this.game.inputHandler.bindCommand(DOWN)
         },
         {
-          name: `Left: ${keycode(this.keyMap[LEFT])}`,
-          func: () => this.game.inputHandler.bindCommand(LEFT)
+          name: `Move Left: ${keycode(this.keyMap[LEFT])}`,
+          enterFunc: () => this.game.inputHandler.bindCommand(LEFT)
         },
         {
-          name: `Right: ${keycode(this.keyMap[RIGHT])}`,
-          func: () => this.game.inputHandler.bindCommand(RIGHT)
+          name: `Move Right: ${keycode(this.keyMap[RIGHT])}`,
+          enterFunc: () => this.game.inputHandler.bindCommand(RIGHT)
         },
         {
           name: `Rotate Left: ${keycode(this.keyMap[ROTATE_LEFT])}`,
-          func: () => this.game.inputHandler.bindCommand(ROTATE_LEFT)
+          enterFunc: () => this.game.inputHandler.bindCommand(ROTATE_LEFT)
         },
         {
           name: `Rotate Right: ${keycode(this.keyMap[ROTATE_RIGHT])}`,
-          func: () => this.game.inputHandler.bindCommand(ROTATE_RIGHT)
+          enterFunc: () => this.game.inputHandler.bindCommand(ROTATE_RIGHT)
         },
         {
           name: `Hold Piece: ${keycode(this.keyMap[HOLD])}`,
-          func: () => this.game.inputHandler.bindCommand(HOLD)
+          enterFunc: () => this.game.inputHandler.bindCommand(HOLD)
         },
       ]
     };
@@ -86,8 +116,8 @@ export default class Menu {
       this.selection = 0;
     }
 
-    if (currentSelection.func) {
-      currentSelection.func();
+    if (currentSelection.enterFunc) {
+      currentSelection.enterFunc();
     }
   }
   
@@ -114,6 +144,24 @@ export default class Menu {
     this.selection = this.selection === screen.options.length - 1
       ? 0
       : this.selection + 1;
+  }
+
+  left() {
+    const screen = this.screen();
+    const currentSelection = screen.options[this.selection];
+
+    if (currentSelection.leftFunc) {
+      currentSelection.leftFunc();
+    }
+  }
+
+  right() {
+    const screen = this.screen();
+    const currentSelection = screen.options[this.selection];
+
+    if (currentSelection.rightFunc) {
+      currentSelection.rightFunc();
+    }
   }
   
   get currentScreen() {

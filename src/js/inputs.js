@@ -1,5 +1,5 @@
 import { 
-  DAS, 
+  DELAYED_AUTO_SHIFT, 
   FIELD_ROWS,
   LEFT,
   RIGHT,
@@ -51,6 +51,8 @@ export default class InputHandler {
       [ENTER]: 13, // enter
       [ESCAPE]: 27
     };
+
+    this.das = DELAYED_AUTO_SHIFT;
 
     this.keyState = this.createKeyState();
 
@@ -155,16 +157,30 @@ export default class InputHandler {
 
         if (
           keyState[up].pressed 
-          && (keyState[up].time === 0 || keyState[up].time >= DAS * 2)
+          && (keyState[up].time === 0 || keyState[up].time >= this.das * 2)
         ) {
           menu.up();
         }
 
         if (
           keyState[down].pressed 
-          && (keyState[down].time === 0 || keyState[down].time >= DAS * 2)
+          && (keyState[down].time === 0 || keyState[down].time >= this.das * 2)
         ) {
           menu.down();
+        }
+
+        if (
+          keyState[left].pressed
+          && (keyState[left].time === 0 || keyState[left].time >= this.das )
+        ) {
+          menu.left();
+        }
+
+        if (
+          keyState[right].pressed
+          && (keyState[right].time === 0 || keyState[right].time >= this.das )
+        ) {
+          menu.right();
         }
 
         if (commandToBind && unboundKey.pressed && unboundKey.time === 0) {
@@ -196,7 +212,7 @@ export default class InputHandler {
         
         if (
           keyState[left].pressed 
-          && (keyState[left].time === 0 || keyState[left].time >= DAS)
+          && (keyState[left].time === 0 || keyState[left].time >= this.das)
         ) {
           piece.move(-1, 0);
           if (field.intersects(piece.blocks)) {
@@ -208,7 +224,7 @@ export default class InputHandler {
       
         if (
           keyState[right].pressed 
-          && (keyState[right].time === 0 || keyState[right].time >= DAS)
+          && (keyState[right].time === 0 || keyState[right].time >= this.das)
         ) {
           piece.move(1, 0);
           if (field.intersects(piece.blocks)) {
@@ -282,4 +298,11 @@ export default class InputHandler {
   bindCommand(command) {
     this.commandToBind = command;
   }
+
+  setDas(val) {
+    if (val >= 100 && val <= 1000) {
+      this.das = val;
+    }
+  }
+  
 }
