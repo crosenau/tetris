@@ -3,7 +3,7 @@ import { J, L, T, O, I, S, Z } from './shapes';
 
 const { floor, random } = Math;
 
-const queue = [];
+let queue = [];
 
 function getRandomBag() {
   const shapes = [J, L, T, O, I, S, Z];
@@ -32,4 +32,8 @@ export function getNextPieces(num = 1) {
 
 export function getQueue() {
   return queue;
+}
+
+export function clearQueue() {
+  queue = [];
 }

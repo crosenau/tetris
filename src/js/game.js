@@ -1,6 +1,6 @@
 import Grid from './grid';
 import Tetromino from './tetromino';
-import { getNextPieces } from './bag';
+import { clearQueue, getNextPieces } from './bag';
 import InputHanlder from './inputs';
 import Vector from './vector';
 import Renderer from './renderer';
@@ -44,6 +44,7 @@ export default class Game {
      Set game variables to initial game state
     */
     this.field.clear();
+    clearQueue();
     this.nextPieces = getNextPieces(3);
     this.heldPiece = null;
     this.holdUsed = false;
@@ -53,10 +54,11 @@ export default class Game {
     this.lockDelay = LOCK_DELAY;
     this.lockDelayResets = 0;
     this.goal = goal;
+    this.piece = null;
     
     this.setGravity();
-    this.nextPiece();
-    this.piece = null;
+    this.updateNextPieces();
+    
 
     // Drop piece g rows when g >= 1
     // this.gravity is added to g each frame
@@ -168,6 +170,11 @@ export default class Game {
     this.pieceSpawnPosition();
     
     this.nextPieces.push(...getNextPieces(1));
+
+    this.updateNextPieces();
+  }
+
+  updateNextPieces() {
     const blocks = [];
     
     for (let i = 0; i < this.nextPieces.length; i++) {
@@ -280,7 +287,9 @@ export default class Game {
       return;
     }
 
-    if (!this.piece) this.nextPiece();
+    if (!this.piece) {
+      this.nextPiece();
+    }
 
     this.field.remove(this.piece.blocks);
 

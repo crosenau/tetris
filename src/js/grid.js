@@ -56,6 +56,10 @@ export default class Grid {
     return false;
   }
   
+    /**
+   * Remove all blocks from grid or all blocks of a specfic type.
+   * @param {Array} label String
+   */
   clear(label) {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
