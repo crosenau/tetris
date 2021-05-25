@@ -7,8 +7,6 @@ export function digitalTime(ms) {
   for (let unit of [minutes, seconds, milliseconds]) {
     if (unit < 10) {
       time += `0${unit}:`
-    } else if (unit > 99) {
-      time += String(Math.round(unit / 10));
     } else {
       time += `${unit}:`;
     }

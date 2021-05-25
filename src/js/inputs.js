@@ -1,5 +1,8 @@
+import keycode from 'keycode';
 import { 
-  DELAYED_AUTO_SHIFT, 
+  DELAYED_AUTO_SHIFT,
+  AUTO_REPEAT_RATE,
+  SOFT_DROP_RATE,
   FIELD_ROWS,
   LEFT,
   RIGHT,
@@ -10,7 +13,7 @@ import {
   HOLD,
   ENTER,
   ESCAPE,
-  GAMESTATE
+  GAMESTATE,
 } from './constants';
 
 const rotationTests = {
@@ -45,19 +48,24 @@ export default class InputHandler {
       [RIGHT]: 39,
       [UP]: 38,
       [DOWN]: 40,
-      [ROTATE_LEFT]: 90, // z
-      [ROTATE_RIGHT]: 88, // x
-      [HOLD]: 65, // a
+      [ROTATE_LEFT]: 88, // x
+      [ROTATE_RIGHT]: 67, // c
+      [HOLD]: 90, // z
       [ENTER]: 13, // enter
       [ESCAPE]: 27
     };
 
     this.das = DELAYED_AUTO_SHIFT;
+    this.arr = AUTO_REPEAT_RATE;
+    this.sdr = SOFT_DROP_RATE;
 
     this.keyState = this.createKeyState();
 
     this.unboundKey = { keyCode: null, pressed: false, time: 0 }
     this.commandToBind = null;
+
+    // Used to track how many times lateral movement has fired during a keypress
+    this.ARtick = 0;
     
     window.addEventListener('keydown', event => this.updateKeyState(event));
     window.addEventListener('keyup', event => this.updateKeyState(event));
@@ -96,6 +104,12 @@ export default class InputHandler {
       case 'keyup': {
         if (keyCode in this.keyState) {
           this.keyState[keyCode].pressed = false;
+          if (
+            keyCode === this.keyMap[LEFT] 
+            || keyCode === this.keyMap[RIGHT]
+          ) {
+            this.ARtick = 0;
+          }
         } else {
           this.unboundKey.pressed = false;
         }
@@ -127,6 +141,17 @@ export default class InputHandler {
     }
   
     return false;
+  }
+
+  horizontalMove(direction) {
+    const { field, piece } = this.game;
+
+    piece.move(direction, 0);
+    if (field.intersects(piece.blocks)) {
+      piece.move(-direction, 0);
+    } else {
+      this.game.resetLockDelay();
+    }
   }
 
   handleKeys(dt) {
@@ -205,32 +230,44 @@ export default class InputHandler {
         if (
           keyState[down].pressed 
           && keyState[down].time === 0 
-          && this.game.gravity < 0.75
+          && this.game.gravity < this.sdr
         ) {
-          this.game.setGravity(1);
+          this.game.setGravity(this.sdr);
         }
         
-        if (
-          keyState[left].pressed 
-          && (keyState[left].time === 0 || keyState[left].time >= this.das)
-        ) {
-          piece.move(-1, 0);
-          if (field.intersects(piece.blocks)) {
-            piece.move(1, 0);
-          } else {
-            this.game.resetLockDelay();
+        /** 
+         * Move piece left/right if: 
+         *  key was just pressed, 
+         *  pressed time is longer than DAS,
+         *  or if an ARR interval has passed (not including DAS tick).
+        */
+        if (keyState[left].pressed) {
+          if (keyState[left].time === 0) {
+            this.ARtick += 1;
+            this.horizontalMove(-1);
+          } else if (keyState[left].time - this.das - ((this.ARtick - 1) * this.arr) >= 0) {
+              const delta = keyState[left].time - (this.das + (this.ARtick - 1) * this.arr);
+              const moves = Math.floor(delta / this.arr);
+              
+              for (let i = moves; i >= 0; i--) {
+                this.ARtick += 1;
+                this.horizontalMove(-1);
+              }
           }
         }
       
-        if (
-          keyState[right].pressed 
-          && (keyState[right].time === 0 || keyState[right].time >= this.das)
-        ) {
-          piece.move(1, 0);
-          if (field.intersects(piece.blocks)) {
-            piece.move(-1, 0);
-          } else {
-            this.game.resetLockDelay();
+        if (keyState[right].pressed) {
+          if (keyState[right].time === 0) {
+            this.ARtick += 1;
+            this.horizontalMove(1);
+          } else if (keyState[right].time - this.das - ((this.ARtick - 1) * this.arr) >= 0) {
+            const delta = keyState[right].time - (this.das + (this.ARtick - 1) * this.arr);
+            const moves = Math.floor(delta / this.arr);
+            
+            for (let i = moves; i >= 0; i--) {
+              this.ARtick += 1;
+              this.horizontalMove(1);
+            }
           }
         }
       
@@ -300,9 +337,20 @@ export default class InputHandler {
   }
 
   setDas(val) {
-    if (val >= 100 && val <= 1000) {
+    if (val >= 0 && val <= 1001) {
       this.das = val;
     }
   }
-  
+
+  setArr(val) {
+    if (val > 1 && val <= 1001) {
+      this.arr = val;
+    }
+  }
+
+  setSdr(val) {
+    if (val > 0 && val <= 20) {
+      this.sdr = val;
+    }
+  }
 }

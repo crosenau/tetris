@@ -6,7 +6,8 @@ import {
   DOWN,
   ROTATE_LEFT,
   ROTATE_RIGHT,
-  HOLD
+  HOLD,
+  FPS,
 } from './constants';
 
 export default class Menu {
@@ -16,6 +17,8 @@ export default class Menu {
 
     this.screen = this.main;
     this.selection = 0;
+
+    this.frameInterval = Number(1000 / FPS);
   }
 
   main() {
@@ -60,14 +63,34 @@ export default class Menu {
       title: 'Options',
       from: this.main,
       options: [
-        { 
-          name: `DAS: ${this.game.inputHandler.das} ms`, 
-          leftFunc: () => this.game.inputHandler.setDas(this.game.inputHandler.das - 10),
-          rightFunc: () => this.game.inputHandler.setDas(this.game.inputHandler.das + 10)
-        },
-        { name: 'Key Bindings', to: this.keyBindings }
+        { name: 'Key Bindings', to: this.keyBindings },
+        { name: 'Handling', to: this.handling }
       ]
     };
+  }
+
+  handling() {
+    return {
+      title: 'Handling',
+      from: this.options,
+      options: [
+        { 
+          name: `DAS: ${this.game.inputHandler.das.toFixed(2)} ms`, 
+          leftFunc: () => this.game.inputHandler.setDas(this.game.inputHandler.das - this.frameInterval),
+          rightFunc: () => this.game.inputHandler.setDas(this.game.inputHandler.das + this.frameInterval)
+        },
+        { 
+          name: `ARR: ${this.game.inputHandler.arr.toFixed(2)} ms`, 
+          leftFunc: () => this.game.inputHandler.setArr(this.game.inputHandler.arr - this.frameInterval),
+          rightFunc: () => this.game.inputHandler.setArr(this.game.inputHandler.arr + this.frameInterval)
+        },
+        {
+          name: `SDR: ${this.game.inputHandler.sdr} rows per frame`,
+          leftFunc: () => this.game.inputHandler.setSdr(this.game.inputHandler.sdr - 1),
+          rightFunc: () => this.game.inputHandler.setSdr(this.game.inputHandler.sdr + 1),
+        }
+      ]
+    }
   }
 
   keyBindings() {

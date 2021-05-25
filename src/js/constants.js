@@ -9,8 +9,10 @@ export const HOLD_COLUMNS = 4;
 export const HOLD_ROWS = 4;
 
 export const LOCK_DELAY = 500;
-export const SPAWN_DELAY = 50;
-export const DELAYED_AUTO_SHIFT = 200;
+export const SPAWN_DELAY = 0;
+export const DELAYED_AUTO_SHIFT = 166.67;
+export const AUTO_REPEAT_RATE = 16.67;
+export const SOFT_DROP_RATE = 20;
 
 export const LEFT = 'LEFT';
 export const RIGHT = 'RIGHT';
@@ -31,3 +33,4 @@ export const GAMESTATE = {
 }
 
 export const FPS = 60;
+export const FPStolerance = 0.15

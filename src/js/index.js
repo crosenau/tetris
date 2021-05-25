@@ -1,5 +1,5 @@
 import Game from './game';
-import { FPS } from './constants';
+import { FPS, FPStolerance } from './constants';
 
 import '../styles/index.css';
 
@@ -8,7 +8,7 @@ const gameHeight = window.innerHeight;
 
 let game = new Game(gameWidth, gameHeight);
 
-const frameInterval = 1000 / FPS;
+const frameInterval = 1000 / FPS - FPStolerance;
 
 let lastUpdate = 0;
 function loop(timestamp) {
@@ -16,7 +16,9 @@ function loop(timestamp) {
 
   let dt = timestamp - lastUpdate;
 
-  if (dt < frameInterval) return;
+  if (dt < frameInterval) {
+    return;
+  }
   
   lastUpdate = timestamp;
   game.update(dt);

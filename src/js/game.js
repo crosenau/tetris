@@ -7,7 +7,6 @@ import Renderer from './renderer';
 import Menu from './menu';
 import { digitalTime } from './utils';
 import {
-  DAS,
   FIELD_COLUMNS,
   FIELD_ROWS,
   HIDDEN_ROWS,
@@ -60,9 +59,9 @@ export default class Game {
     this.updateNextPieces();
     
 
-    // Drop piece g rows when g >= 1
-    // this.gravity is added to g each frame
-    this.g = 0;
+    // Drop piece rowsToDrop rows when rowsToDrop >= 1
+    // this.gravity is added to rowsToDrop each frame
+    this.rowsToDrop = 0;
 
     this.spawnDelay = 0;
 
@@ -304,15 +303,16 @@ export default class Game {
         
         this.resetLockDelay({ clearLockDelayResets: true });
         this.holdUsed = false;
-        this.g = 0;
+        this.rowsToDrop = 0;
         this.spawnDelay = SPAWN_DELAY;
       } else {
         this.lockDelay -= dt;
       }
     } else {
-      if (this.g >= 1) {
-        this.drop(this.piece, Math.floor(this.g));
-        this.g = 0;
+      if (this.rowsToDrop >= 1) {
+        let rows = Math.floor(this.rowsToDrop)
+        this.drop(this.piece, rows);
+        this.rowsToDrop -= rows;
       }
     }
 
@@ -330,7 +330,7 @@ export default class Game {
       .filter(block => block.location.y > -1)
     );
   
-    this.g += this.gravity;
+    this.rowsToDrop += this.gravity;
   }
 
   pauseLoop(dt) {
@@ -348,7 +348,7 @@ export default class Game {
 
   gameOverLoop(dt) {
     if (this.goal && this.lines >= this.goal) {
-      this.renderer.drawGameOver('All Clear!');          
+      this.renderer.drawGameOver(digitalTime(this.playTime));
     } else {
       this.renderer.drawGameOver();
     }
@@ -379,5 +379,7 @@ export default class Game {
         break;
       };
     }
+    
+    //document.querySelector("#debug").innerHTML = dt;
   }
 }
