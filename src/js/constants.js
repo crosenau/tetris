@@ -30,7 +30,7 @@ export const GAMESTATE = {
   RUNNING: 2,
   PAUSED: 3,
   GAMEOVER: 4
-}
+};
 
 export const FPS = 60;
-export const FPStolerance = 0.15
+export const FPStolerance = 0.15;

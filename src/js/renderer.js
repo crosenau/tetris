@@ -14,14 +14,20 @@ const canvas = document.querySelector('canvas');
 const ctx = canvas.getContext('2d');
 
 const blockStyles = {
-  T: ['magenta', 'darkmagenta'],
-  O: ['yellow', 'gold'],
-  I: ['cyan', 'darkcyan'],
-  J: ['blue', 'darkblue'],
-  L: ['orange', 'darkorange'],
-  S: ['green', 'darkgreen'],
-  Z: ['red', 'darkred'],
-  G: ['#ccca', '#aaaa']
+  T: ['#800080', '#400040'],
+  O: ['#ffff00', '#808000'],
+  I: ['#00ffff', '#008080'],
+  J: ['#0000ff', '#000080'],
+  L: ['#ff7f00', '#803f00'],
+  S: ['#00ff00', '#008000'],
+  Z: ['#ff0000', '#800000'],
+  TG: ['#80008040', '#40004040'],
+  OG: ['#ffff0040', '#80800040'],
+  IG: ['#00ffff40', '#00808040'],
+  JG: ['#0000ff40', '#00008040'],
+  LG: ['#ff7f0040', '#803f0040'],
+  SG: ['#00ff0040', '#00800040'],
+  ZG: ['#ff000040', '#80000040'],
 };
 
 const fontFamily = 'Orbitron';

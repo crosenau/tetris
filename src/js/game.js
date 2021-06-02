@@ -210,25 +210,21 @@ export default class Game {
 
   addGhostPiece() {
     this.field.clear('G');
-  
-    const { x, y } = this.piece.topLeft;
-
-    this.drop(this.piece, FIELD_ROWS);
-  
+    
     const ghostPiece = new Tetromino(
       this.piece.topLeft.x,
       this.piece.topLeft.y,
       {
-        label: 'G',
+        label: this.piece.label + 'G',
         rotations: this.piece.rotations,
       }
     );
   
     ghostPiece.rotation = this.piece.rotation;
+
+    this.drop(ghostPiece, FIELD_ROWS);
   
     this.field.add(ghostPiece.blocks);
-  
-    this.piece.moveTo(x, y);
   }
 
   lockPiece() {

@@ -49,15 +49,19 @@ export default class Grid {
 
       if (x < 0 || x > this.width - 1) return true;
       if (y < 0 || y > this.height - 1) return true;
-      // Ghost blocks ('G') SPAWN_DELAY ignored for intersections
-      if (![0, 'G'].includes(this.cells[y][x])) return true;
+      // Ghost blocks ('[X]G') SPAWN_DELAY ignored for intersections
+      if (
+        typeof this.cells[y][x] === 'string' 
+        && !this.cells[y][x].includes('G')) {
+          return true;
+        }
     }
 
     return false;
   }
   
     /**
-   * Remove all blocks from grid or all blocks of a specfic type.
+   * Remove all blocks from grid or all blocks whose label contains a specified value.
    * @param {Array} label String
    */
   clear(label) {
@@ -65,7 +69,10 @@ export default class Grid {
       for (let x = 0; x < this.width; x++) {
         if (!label) {
           this.cells[y][x] = 0;
-        } else if (this.cells[y][x] === label) {
+        } else if (
+          typeof(this.cells[y][x]) === 'string'
+          && this.cells[y][x].includes(label)
+          ) {
           this.cells[y][x] = 0;
         }
       }
