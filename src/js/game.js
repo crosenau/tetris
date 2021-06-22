@@ -54,6 +54,7 @@ export default class Game {
     this.lockDelayResets = 0;
     this.goal = goal;
     this.piece = null;
+    this.tSpin = false;
     
     this.setGravity();
     this.updateNextPieces();
@@ -101,6 +102,34 @@ export default class Game {
     piece.move(0, -1);
   }
 
+  isTspin() {
+    if (this.piece.label !== 'T') {
+      return false;
+    }
+
+    let startPos = this.piece.topLeft;
+
+    const moveTests = [
+      [0, -1],
+      [1, 0],
+      [-1, 0]
+    ];
+
+    for (let move of moveTests) {
+      const [x, y] = move;
+      this.piece.move(x, y)
+    
+      if (!this.field.intersects(this.piece.blocks)) {
+        this.piece.moveTo(startPos.x, startPos.y);
+        return false;
+      }
+
+      this.piece.moveTo(startPos.x, startPos.y);
+    }
+
+    return true;
+  }
+
   clearRows() {
     const { blocks } = this.field;
   
@@ -109,6 +138,7 @@ export default class Game {
     for (let y = FIELD_ROWS - 1; y >= 0; y--) {
       const row = blocks.filter(block => block.location.y === y);
   
+      // Shift rows down to fill cleared space
       if (rowsCleared) {
         this.field.remove(row);
         for (let block of row) {
@@ -130,10 +160,20 @@ export default class Game {
 
   updateStats(rowsCleared) {
     this.lines += rowsCleared;
+
+    let points;
+
+    if (rowsCleared === 0) {
+      points = 0;
+    } else {
+      const tSpinMultiplier = this.tSpin ? 2 : 1;
+      let rowMultiplier = (rowsCleared * tSpinMultiplier) - 1;
+
+      points = 2**rowMultiplier * 100 * this.level
+    }
+
+    this.score += points;
     this.level = Math.max(this.level, Math.floor(this.lines / 10) + 1);
-    this.score = rowsCleared === 0
-      ? this.score 
-      : this.score + 2**(rowsCleared - 1) * 100 * this.level;
 
     this.renderer.drawStats({
       level: this.level,
@@ -290,6 +330,7 @@ export default class Game {
 
     if (this.pieceIsLanded()) {
       if (this.lockDelay < 1) {
+        this.tSpin = this.isTspin();
         this.field.add(this.piece.blocks);
         this.clearRows();
         this.nextPiece();
@@ -301,6 +342,7 @@ export default class Game {
         this.holdUsed = false;
         this.rowsToDrop = 0;
         this.spawnDelay = SPAWN_DELAY;
+        this.tSpin = false;
       } else {
         this.lockDelay -= dt;
       }
