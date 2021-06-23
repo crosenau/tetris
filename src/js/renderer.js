@@ -70,17 +70,30 @@ export default class Renderer {
       textFill: 'white'
     };
 
-    this.drawStat('Level', stats.level, style);
-    this.drawStat('Lines', stats.lines, {
+    this.drawStat('Level', stats.level, {
       ...style,
-      top: 18 * this.cellHeight,
-      bottom: 22 * this.cellHeight
+      left: 7 * this.cellWidth,
+      right: 12.9 * this.cellWidth,
+      top: 22 * this.cellHeight,
+      bottom: 26 * this.cellHeight,
+      textAlign: 'right'
     });
+
     this.drawStat('Score', stats.score, {
+      ...style,
+      left: 7 * this.cellWidth,
+      right: 12.9 * this.cellWidth,
+      top: 26 * this.cellHeight,
+      bottom: 30 * this.cellHeight,
+      textAlign: 'right'
+    });
+
+    this.drawStat('Lines', stats.lines, {
       ...style,
       top: 22 * this.cellHeight,
       bottom: 26 * this.cellHeight
     });
+
     this.drawStat('Time', stats.time, {
       ...style,
       top: 26 * this.cellHeight,
@@ -101,15 +114,25 @@ export default class Renderer {
     ctx.textAlign = style.textAlign;
     ctx.font = style.font;
     ctx.fillStyle = style.textFill;
+
+    let textStart;
+
+    if (style.textAlign === 'left') {
+      textStart = style.left + style.padLeft;
+    } else {
+      textStart = style.right - style.padLeft;
+    }
+
     ctx.fillText(
       label,
-      style.left + style.padLeft,
+      textStart,
       style.top + style.padTop
     );
+
     ctx.font = style.dataFont;
     ctx.fillText(
       String(data),
-      style.left + style.padLeft,
+      textStart,
       style.top + style.padTop + style.padTop * 2.5
     );
   }
@@ -227,7 +250,7 @@ export default class Renderer {
     const style = {
       top: 1 * this.cellHeight,
       left: (27 * this.cellWidth) - 1,
-      bottom: 13 * this.cellHeight,
+      bottom: 21 * this.cellHeight,
       right: 31 * this.cellWidth,
       padLeft: this.cellWidth / 2,
       padRight: this.cellWidth / 2,

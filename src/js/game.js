@@ -44,7 +44,7 @@ export default class Game {
     */
     this.field.clear();
     clearQueue();
-    this.nextPieces = getNextPieces(3);
+    this.nextPieces = getNextPieces(5);
     this.heldPiece = null;
     this.holdUsed = false;
     //this.level = 1;
